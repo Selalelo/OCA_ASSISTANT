@@ -1,0 +1,10 @@
+install
+fastapi
+uvicorn 
+python-dotenv  
+qdrant-client 
+sentence-transformers 
+pymupdf 
+redis 
+httpx
+groq

@@ -1,0 +1,37 @@
+# environment
+.env
+.env.*
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# models (these are large, don't commit)
+*.safetensors
+*.bin
+*.pt
+
+# sentence transformers cache
+.cache/
+
+# virtual environment
+venv/
+env/
+.venv/
+
+# pdf files (personal study material)
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# logs
+*.log

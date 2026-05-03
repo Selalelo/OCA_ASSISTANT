@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OCA Assistant · Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <!-- highlight.js for VSCode-style syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #21262d;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #f78166;
+      --accent4: #e3b341;
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --code-bg: #161b22;
+      --sidebar-w: 260px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      height: 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 16px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .topbar-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .topbar-path {
+      font-size: 11px;
+      color: var(--muted);
+      flex: 1;
+    }
+    .topbar-path span { color: var(--text); }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px 4px 4px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .user-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--bg);
+      font-weight: 700;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .logout-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-section {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+
+    .filter-select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 7px 10px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237d8590' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+    .filter-select:focus { outline: none; border-color: var(--accent); }
+
+    .filter-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin: 2px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+    .tag-topic { background: rgba(88,166,255,0.1); color: var(--accent); border-color: rgba(88,166,255,0.2); }
+    .tag-difficulty { background: rgba(227,179,65,0.1); color: var(--accent4); border-color: rgba(227,179,65,0.2); }
+    .tag-type { background: rgba(63,185,80,0.1); color: var(--accent2); border-color: rgba(63,185,80,0.2); }
+
+    /* history list */
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .history-list::-webkit-scrollbar { width: 4px; }
+    .history-list::-webkit-scrollbar-track { background: transparent; }
+    .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .history-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .history-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .history-item .hi-time {
+      font-size: 9px;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+    }
+
+    .history-empty {
+      padding: 16px 10px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* ── CHAT AREA ── */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* welcome screen */
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      gap: 16px;
+      opacity: 0.6;
+    }
+    .welcome-icon { font-size: 40px; }
+    .welcome h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      color: var(--text);
+    }
+    .welcome p { font-size: 12px; color: var(--muted); max-width: 320px; line-height: 1.8; }
+
+    .suggestion-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(88,166,255,0.06);
+    }
+
+    /* messages */
+    .message {
+      display: flex;
+      gap: 12px;
+      animation: msgIn 0.3s ease forwards;
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .msg-avatar.user { background: var(--accent); color: var(--bg); }
+    .msg-avatar.assistant { background: var(--surface2); border: 1px solid var(--border); color: var(--accent2); }
+
+    .msg-content { flex: 1; min-width: 0; }
+
+    .msg-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .msg-name { font-size: 12px; font-weight: 500; color: var(--text); }
+    .msg-time { font-size: 10px; color: var(--muted); }
+    .msg-badge {
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      letter-spacing: 1px;
+    }
+    .badge-cache { background: rgba(227,179,65,0.15); color: var(--accent4); }
+    .badge-rag { background: rgba(63,185,80,0.15); color: var(--accent2); }
+
+    .msg-body {
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    .msg-body p { margin-bottom: 12px; }
+    .msg-body p:last-child { margin-bottom: 0; }
+
+    /* VSCode-style code blocks */
+    .msg-body pre {
+      background: var(--code-bg) !important;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .code-lang {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .lang-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+    .copy-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 3px;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { background: var(--border); color: var(--text); }
+
+    .msg-body pre code {
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 12px !important;
+      padding: 14px !important;
+      display: block;
+    }
+
+    .msg-body code:not(pre code) {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 12px;
+      color: var(--accent3);
+    }
+
+    /* filter pills shown on message */
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .filter-pill {
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      letter-spacing: 0.5px;
+    }
+    .pill-topic { background: rgba(88,166,255,0.1); color: var(--accent); }
+    .pill-diff { background: rgba(227,179,65,0.1); color: var(--accent4); }
+    .pill-type { background: rgba(63,185,80,0.1); color: var(--accent2); }
+
+    /* thinking indicator */
+    .thinking {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 4px 0;
+    }
+    .thinking span {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .thinking span:nth-child(2) { animation-delay: 0.2s; background: var(--accent2); }
+    .thinking span:nth-child(3) { animation-delay: 0.4s; background: var(--accent4); }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ── INPUT AREA ── */
+    .input-area {
+      padding: 16px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      transition: border-color 0.2s;
+    }
+    .input-wrapper:focus-within { border-color: var(--accent); }
+
+    .prompt-label {
+      font-size: 12px;
+      color: var(--accent2);
+      flex-shrink: 0;
+      padding-bottom: 2px;
+    }
+
+    #user-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      resize: none;
+      outline: none;
+      min-height: 20px;
+      max-height: 120px;
+      line-height: 1.6;
+    }
+    #user-input::placeholder { color: var(--muted); }
+
+    .send-btn {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: var(--bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .send-btn:hover { background: #79b8ff; transform: scale(1.05); }
+    .send-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+
+    .input-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo">⬡ OCA</div>
+    <div class="topbar-path">
+      workspace / <span>java-oca-se8</span> / <span>study-session</span>
+    </div>
+    <div class="user-pill">
+      <div class="user-avatar" id="user-initial">?</div>
+      <span id="user-email">loading...</span>
+    </div>
+    <button class="logout-btn" onclick="logout()">$ exit</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- filters -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">// filters</div>
+        <select class="filter-select" id="filter-topic">
+          <option value="">topic: all</option>
+          <option value="interfaces">interfaces</option>
+          <option value="arrays">arrays</option>
+          <option value="exceptions">exceptions</option>
+          <option value="strings">strings</option>
+          <option value="OOP">OOP</option>
+          <option value="inheritance">inheritance</option>
+          <option value="methods">methods</option>
+          <option value="constructors">constructors</option>
+          <option value="data_types">data_types</option>
+          <option value="operators">operators</option>
+          <option value="control_flow">control_flow</option>
+          <option value="enums">enums</option>
+          <option value="lambdas">lambdas</option>
+        </select>
+        <select class="filter-select" id="filter-difficulty">
+          <option value="">difficulty: all</option>
+          <option value="easy">easy</option>
+          <option value="medium">medium</option>
+          <option value="hard">hard</option>
+        </select>
+        <select class="filter-select" id="filter-type">
+          <option value="">type: all</option>
+          <option value="concept">concept</option>
+          <option value="rule">rule</option>
+          <option value="gotcha">gotcha</option>
+          <option value="code_example">code_example</option>
+          <option value="practice_question">practice_question</option>
+        </select>
+      </div>
+
+      <!-- history -->
+      <div class="sidebar-section" style="border-bottom:none; padding-bottom:4px;">
+        <div class="sidebar-label">// history</div>
+      </div>
+      <div class="history-list" id="history-list">
+        <div class="history-empty">No history yet.<br>Start studying!</div>
+      </div>
+
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat-area">
+      <div class="chat-messages" id="chat-messages">
+        <div class="welcome" id="welcome-screen">
+          <div class="welcome-icon">⬡</div>
+          <h2>Java OCA Study Assistant</h2>
+          <p>Ask anything about Java OCA SE 8. Use filters to narrow by topic, difficulty, or content type.</p>
+          <div class="suggestion-chips">
+            <div class="chip" onclick="useChip(this)">hard practice questions about interfaces</div>
+            <div class="chip" onclick="useChip(this)">gotchas in string comparison</div>
+            <div class="chip" onclick="useChip(this)">easy concepts about arrays</div>
+            <div class="chip" onclick="useChip(this)">rules for method overriding</div>
+            <div class="chip" onclick="useChip(this)">exceptions hierarchy</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INPUT -->
+      <div class="input-area">
+        <div class="input-wrapper">
+          <span class="prompt-label">❯</span>
+          <textarea
+            id="user-input"
+            rows="1"
+            placeholder="ask a Java OCA question..."
+          ></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()">↑</button>
+        </div>
+        <div class="input-meta">
+          <span id="filter-summary">no filters active</span>
+          <span>shift+enter for new line · enter to send</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { getSession, getToken, logout as supabaseLogout } from './auth.js';
+
+    const API = 'http://localhost:8000';
+
+    // ── AUTH CHECK ──
+    async function init() {
+      const session = await getSession();
+      if (!session) {
+        window.location.href = '/index.html';
+        return;
+      }
+      const email = session.user.email;
+      document.getElementById('user-email').textContent = email;
+      document.getElementById('user-initial').textContent = email[0].toUpperCase();
+      await loadHistory();
+    }
+
+    window.logout = async () => {
+      await supabaseLogout();
+      window.location.href = '/index.html';
+    };
+
+    // ── FILTER SUMMARY ──
+    function updateFilterSummary() {
+      const topic = document.getElementById('filter-topic').value;
+      const diff = document.getElementById('filter-difficulty').value;
+      const type = document.getElementById('filter-type').value;
+      const parts = [];
+      if (topic) parts.push(`topic:${topic}`);
+      if (diff) parts.push(`difficulty:${diff}`);
+      if (type) parts.push(`type:${type}`);
+      document.getElementById('filter-summary').textContent =
+        parts.length ? parts.join(' · ') : 'no filters active';
+    }
+
+    ['filter-topic','filter-difficulty','filter-type'].forEach(id => {
+      document.getElementById(id).addEventListener('change', updateFilterSummary);
+    });
+
+    // ── CHIPS ──
+    window.useChip = (el) => {
+      document.getElementById('user-input').value = el.textContent;
+      sendMessage();
+    };
+
+    // ── AUTO RESIZE TEXTAREA ──
+    const textarea = document.getElementById('user-input');
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    });
+
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // ── SEND MESSAGE ──
+    window.sendMessage = async () => {
+      const input = document.getElementById('user-input');
+      const question = input.value.trim();
+      if (!question) return;
+
+      const token = await getToken();
+      if (!token) { window.location.href = '/index.html'; return; }
+
+      // hide welcome
+      const welcome = document.getElementById('welcome-screen');
+      if (welcome) welcome.remove();
+
+      // get filters
+      const filters = {
+        topic: document.getElementById('filter-topic').value || null,
+        difficulty: document.getElementById('filter-difficulty').value || null,
+        content_type: document.getElementById('filter-type').value || null,
+      };
+
+      // render user message
+      appendMessage('user', question, null, filters);
+      input.value = '';
+      input.style.height = 'auto';
+
+      // disable send
+      const btn = document.getElementById('send-btn');
+      btn.disabled = true;
+
+      // show thinking
+      const thinkingId = showThinking();
+
+      try {
+        const res = await fetch(`${API}/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ question, filters })
+        });
+
+        const data = await res.json();
+        removeThinking(thinkingId);
+        appendMessage('assistant', data.answer, data.source, data.filters);
+        await loadHistory();
+
+      } catch (err) {
+        removeThinking(thinkingId);
+        appendMessage('assistant', '⚠ Connection error. Is the backend running?', null, null);
+      }
+
+      btn.disabled = false;
+    };
+
+    // ── RENDER MESSAGE ──
+    function appendMessage(role, text, source, filters) {
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = 'message';
+
+      const isUser = role === 'user';
+      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // filter pills
+      let filterPills = '';
+      if (filters && (filters.topic || filters.difficulty || filters.content_type)) {
+        filterPills = '<div class="filter-pills">';
+        if (filters.topic) filterPills += `<span class="filter-pill pill-topic">${filters.topic}</span>`;
+        if (filters.difficulty) filterPills += `<span class="filter-pill pill-diff">${filters.difficulty}</span>`;
+        if (filters.content_type) filterPills += `<span class="filter-pill pill-type">${filters.content_type}</span>`;
+        filterPills += '</div>';
+      }
+
+      // source badge
+      let badge = '';
+      if (source === 'cache') badge = '<span class="msg-badge badge-cache">⚡ CACHED</span>';
+      if (source === 'rag') badge = '<span class="msg-badge badge-rag">🔍 RAG</span>';
+
+      div.innerHTML = `
+        <div class="msg-avatar ${role}">${isUser ? 'U' : 'AI'}</div>
+        <div class="msg-content">
+          <div class="msg-header">
+            <span class="msg-name">${isUser ? 'you' : 'assistant'}</span>
+            <span class="msg-time">${now}</span>
+            ${badge}
+          </div>
+          ${filterPills}
+          <div class="msg-body">${formatMessage(text)}</div>
+        </div>
+      `;
+
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+
+      // highlight code blocks
+      div.querySelectorAll('pre code').forEach(block => {
+        hljs.highlightElement(block);
+
+        // add copy button to each code block
+        const pre = block.parentElement;
+        const lang = block.className.replace('language-', '').split(' ')[0] || 'java';
+        const header = document.createElement('div');
+        header.className = 'code-header';
+        header.innerHTML = `
+          <div class="code-lang">
+            <div class="lang-dot"></div>
+            ${lang}
+          </div>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        `;
+        pre.insertBefore(header, block);
+      });
+    }
+
+    // ── FORMAT MESSAGE (markdown-lite) ──
+    function formatMessage(text) {
+      // code blocks
+      text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
+        return `<pre><code class="language-${lang || 'java'}">${escapeHtml(code.trim())}</code></pre>`;
+      });
+      // inline code
+      text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+      // bold
+      text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // newlines
+      text = text.replace(/\n\n/g, '</p><p>');
+      text = text.replace(/\n/g, '<br>');
+      return `<p>${text}</p>`;
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    window.copyCode = (btn) => {
+      const code = btn.closest('pre').querySelector('code').innerText;
+      navigator.clipboard.writeText(code);
+      btn.textContent = 'copied!';
+      setTimeout(() => btn.textContent = 'copy', 2000);
+    };
+
+    // ── THINKING INDICATOR ──
+    function showThinking() {
+      const id = 'thinking-' + Date.now();
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.id = id;
+      div.className = 'message';
+      div.innerHTML = `
+        <div class="msg-avatar assistant">AI</div>
+        <div class="msg-content">
+          <div class="msg-header"><span class="msg-name">assistant</span></div>
+          <div class="thinking"><span></span><span></span><span></span></div>
+        </div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return id;
+    }
+
+    function removeThinking(id) {
+      document.getElementById(id)?.remove();
+    }
+
+    // ── LOAD HISTORY ──
+    async function loadHistory() {
+      const token = await getToken();
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${API}/history`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        renderHistory(data.history || []);
+      } catch (e) {
+        console.error('Failed to load history:', e);
+      }
+    }
+
+    function renderHistory(items) {
+      const list = document.getElementById('history-list');
+      if (!items.length) {
+        list.innerHTML = '<div class="history-empty">No history yet.<br>Start studying!</div>';
+        return;
+      }
+      list.innerHTML = items.map(item => `
+        <div class="history-item" onclick="replayHistory('${escapeHtml(item.question)}')">
+          ${escapeHtml(item.question.slice(0, 40))}${item.question.length > 40 ? '...' : ''}
+          <span class="hi-time">${new Date(item.created_at).toLocaleDateString()}</span>
+        </div>
+      `).join('');
+    }
+
+    window.replayHistory = (question) => {
+      document.getElementById('user-input').value = question;
+      document.getElementById('user-input').focus();
+    };
+
+    init();
+  </script>
+</body>
+</html>
