@@ -5,7 +5,7 @@ let supabase = null
 async function initSupabase() {
   if (supabase) return supabase  // already initialized
 
-  const res = await fetch('http://localhost:8000/config')
+  const res = await fetch('/config')
   const CONFIG = await res.json()
 
   supabase = createClient(CONFIG.supabase_url, CONFIG.supabase_anon_key)
@@ -17,7 +17,7 @@ export async function loginWithGoogle() {
   const { error } = await client.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + '/dashboard.html'
+      redirectTo: 'https://vigilant-pancake-qr746q4rv6924ww5-8000.app.github.dev/app'
     }
   })
   if (error) console.error('Login error:', error)

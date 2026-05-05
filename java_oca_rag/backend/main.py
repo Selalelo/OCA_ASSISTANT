@@ -1,6 +1,9 @@
 import os
+import httpx
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -16,33 +19,55 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# allow frontend to talk to backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten this in production
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"]
 )
 
+# ── SERVE FRONTEND ──────────────────────────────────────────
+import pathlib
 
-# ─── request models ───────────────────────────────────────────
+BASE_DIR = pathlib.Path(__file__).parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
 
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+
+@app.get("/login")
+async def serve_login():
+    return FileResponse(str(FRONTEND_DIR / "index.html"))
+
+@app.get("/app")
+async def serve_app():
+    return FileResponse(str(FRONTEND_DIR / "dashboard.html"))
+
+
+# ── REQUEST MODELS ──────────────────────────────────────────
 class ChatRequest(BaseModel):
     question: str
-    filters: dict | None = None  # optional manual filters from frontend dropdowns
+    filters: dict | None = None
 
 
-# ─── routes ───────────────────────────────────────────────────
+# ── ROUTES ──────────────────────────────────────────────────
+from fastapi.responses import FileResponse, RedirectResponse
 
 @app.get("/")
 async def root():
-    return {"message": "Java OCA Study Assistant API is running"}
+    return RedirectResponse(url="/login")
+
+
+@app.get("/config")
+async def get_config():
+    return {
+        "supabase_url": os.getenv("SUPABASE_URL"),
+        "supabase_anon_key": os.getenv("SUPABASE_ANON_KEY")
+    }
 
 
 @app.get("/health")
 async def health():
-    """System health check — shows cache stats and service status"""
     return {
         "status": "ok",
         "redis": is_redis_available(),
@@ -52,18 +77,15 @@ async def health():
 
 @app.post("/chat")
 async def chat(request: ChatRequest, user: dict = Depends(verify_token)):
-    """Main chat endpoint — protected, requires valid Supabase JWT"""
-    
     user_id = user["id"]
     question = request.question.strip()
 
     if not question:
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
-    # step 1: check cache
+    # check cache
     cached = get_cached(question)
     if cached:
-        # save to history even if cached
         await save_chat_history(
             user_id=user_id,
             question=question,
@@ -78,13 +100,13 @@ async def chat(request: ChatRequest, user: dict = Depends(verify_token)):
             "source": "cache"
         }
 
-    # step 2: run full RAG pipeline
+    # run RAG pipeline
     result = answer_question(question)
 
-    # step 3: cache the result
+    # cache result
     set_cache(question, result)
 
-    # step 4: save to supabase history
+    # save to supabase
     await save_chat_history(
         user_id=user_id,
         question=question,
@@ -100,32 +122,38 @@ async def chat(request: ChatRequest, user: dict = Depends(verify_token)):
         "source": "rag"
     }
 
+@app.get("/profile")
+async def get_profile(user: dict = Depends(verify_token)):
+    user_id = user["id"]
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{os.getenv('SUPABASE_URL')}/rest/v1/profiles",
+            headers={
+                "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                "Authorization": f"Bearer {os.getenv('SUPABASE_ANON_KEY')}"
+            },
+            params={
+                "id": f"eq.{user_id}",
+                "limit": "1"
+            }
+        )
+    profiles = response.json()
+    return profiles[0] if profiles else {"full_name": user.get("email")}
+
 
 @app.get("/history")
 async def history(user: dict = Depends(verify_token)):
-    """Fetch user chat history from Supabase"""
     user_id = user["id"]
     records = await get_chat_history(user_id)
     return {"history": records}
 
-# backend/main.py — add this endpoint
-@app.get("/config")
-async def get_config():
-    return {
-        "supabase_url": os.getenv("SUPABASE_URL"),
-        "supabase_anon_key": os.getenv("SUPABASE_ANON_KEY")
-    }
-
 
 @app.delete("/history")
 async def clear_history(user: dict = Depends(verify_token)):
-    """Clear user chat history — placeholder for now"""
-    # can implement later with supabase delete call
     return {"message": "History cleared"}
 
 
-# ─── run ──────────────────────────────────────────────────────
-
+# ── RUN ─────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

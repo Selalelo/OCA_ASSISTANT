@@ -3,20 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OCA Study Assistant</title>
+  <title>OCA Assistant · Auth</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0d1117;
       --surface: #161b22;
+      --surface2: #1c2128;
       --border: #21262d;
+      --border-hover: #444c56;
       --accent: #58a6ff;
       --accent2: #3fb950;
       --accent3: #f78166;
+      --accent4: #e3b341;
       --text: #e6edf3;
       --muted: #7d8590;
-      --code-bg: #1f2937;
+      --error: #f78166;
+      --success: #3fb950;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,14 +29,13 @@
       background: var(--bg);
       color: var(--text);
       font-family: 'JetBrains Mono', monospace;
-      min-height: 100vh;
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
     }
 
-    /* animated grid background */
     body::before {
       content: '';
       position: fixed;
@@ -46,169 +49,287 @@
 
     .glow {
       position: fixed;
-      width: 600px;
-      height: 600px;
       border-radius: 50%;
       filter: blur(120px);
       z-index: 0;
       pointer-events: none;
     }
-    .glow-1 { background: rgba(88,166,255,0.08); top: -200px; left: -200px; }
-    .glow-2 { background: rgba(63,185,80,0.06); bottom: -200px; right: -200px; }
+    .glow-1 { width: 400px; height: 400px; background: rgba(88,166,255,0.07); top: -100px; left: -100px; }
+    .glow-2 { width: 300px; height: 300px; background: rgba(63,185,80,0.05); bottom: -100px; right: -100px; }
 
-    .login-card {
+    .card {
       position: relative;
       z-index: 1;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 48px;
+      padding: 24px 28px;
       width: 420px;
-      box-shadow: 0 0 0 1px rgba(88,166,255,0.1), 0 32px 64px rgba(0,0,0,0.4);
-      animation: fadeUp 0.6s ease forwards;
+      box-shadow: 0 0 0 1px rgba(88,166,255,0.08), 0 24px 48px rgba(0,0,0,0.5);
+      animation: fadeUp 0.5s ease forwards;
     }
 
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
+      from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .terminal-bar {
+    /* header row */
+    .card-header {
       display: flex;
-      gap: 6px;
-      margin-bottom: 32px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
     }
-    .dot { width: 12px; height: 12px; border-radius: 50%; }
-    .dot-red { background: #f78166; }
-    .dot-yellow { background: #e3b341; }
-    .dot-green { background: #3fb950; }
 
-    .logo {
-      font-family: 'Syne', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 4px;
-      text-transform: uppercase;
+    .dots { display: flex; gap: 5px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #f78166; }
+    .dot-y { background: #e3b341; }
+    .dot-g { background: #3fb950; }
+
+    .brand {
+      font-size: 9px;
+      letter-spacing: 3px;
       color: var(--accent);
-      margin-bottom: 8px;
+      text-transform: uppercase;
     }
 
-    h1 {
+    /* title row */
+    .title-row {
+      margin-bottom: 14px;
+    }
+
+    .title {
       font-family: 'Syne', sans-serif;
-      font-size: 28px;
+      font-size: 20px;
       font-weight: 800;
-      color: var(--text);
-      margin-bottom: 8px;
-      line-height: 1.2;
+      margin-bottom: 2px;
     }
 
     .subtitle {
-      font-size: 12px;
+      font-size: 10px;
       color: var(--muted);
-      margin-bottom: 36px;
-      line-height: 1.6;
+      line-height: 1.5;
     }
 
-    .code-snippet {
-      background: var(--code-bg);
+    /* tabs */
+    .tabs {
+      display: flex;
+      gap: 3px;
+      background: var(--surface2);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 32px;
-      font-size: 12px;
-      line-height: 1.8;
+      border-radius: 7px;
+      padding: 3px;
+      margin-bottom: 14px;
     }
-    .kw { color: #ff7b72; }
-    .fn { color: #d2a8ff; }
-    .str { color: #a5d6ff; }
-    .cm { color: var(--muted); }
-    .num { color: #79c0ff; }
 
-    .google-btn {
-      width: 100%;
-      padding: 14px;
+    .tab {
+      flex: 1;
+      padding: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
       background: transparent;
+      color: var(--muted);
+    }
+
+    .tab.active {
+      background: var(--surface);
+      color: var(--accent);
       border: 1px solid var(--border);
-      border-radius: 8px;
+    }
+
+    /* panels */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn 0.2s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* alert */
+    .alert {
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 10px;
+      margin-bottom: 10px;
+      display: none;
+      line-height: 1.4;
+    }
+    .alert.show { display: block; }
+    .alert.error { background: rgba(247,129,102,0.1); border: 1px solid rgba(247,129,102,0.2); color: var(--error); }
+    .alert.success { background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.2); color: var(--success); }
+
+    /* fields */
+    .field { margin-bottom: 8px; }
+
+    .field label {
+      display: block;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
       color: var(--text);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+      font-size: 12px;
+      padding: 7px 10px;
       transition: all 0.2s;
-      letter-spacing: 0.5px;
-    }
-    .google-btn:hover {
-      border-color: var(--accent);
-      background: rgba(88,166,255,0.06);
-      box-shadow: 0 0 20px rgba(88,166,255,0.1);
+      outline: none;
     }
 
-    .google-icon {
-      width: 18px;
-      height: 18px;
-    }
+    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(88,166,255,0.08); }
+    .field input.error { border-color: var(--error); }
+    .field input::placeholder { color: var(--muted); font-size: 11px; }
 
-    .footer-text {
-      text-align: center;
-      margin-top: 24px;
+    /* name row */
+    .name-row { display: flex; gap: 8px; }
+    .name-row .field { flex: 1; }
+
+    /* password wrapper */
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 36px; }
+    .pw-toggle {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 12px; padding: 2px;
+    }
+    .pw-toggle:hover { color: var(--text); }
+
+    /* forgot link */
+    .forgot-link {
+      display: block; text-align: right; font-size: 9px;
+      color: var(--accent); cursor: pointer;
+      margin-top: -4px; margin-bottom: 10px;
+    }
+    .forgot-link:hover { opacity: 0.7; }
+
+    /* strength */
+    .strength-bar { height: 2px; background: var(--border); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+    .strength-fill { height: 100%; border-radius: 2px; transition: all 0.3s; width: 0%; }
+    .strength-text { font-size: 8px; color: var(--muted); margin-top: 2px; }
+
+    /* buttons */
+    .btn {
+      width: 100%; padding: 8px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      color: var(--muted);
+      cursor: pointer; transition: all 0.2s; border: none;
+      display: flex; align-items: center; justify-content: center;
+      gap: 7px;
     }
 
-    .status-bar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 24px;
-      padding-top: 24px;
+    .btn-primary { background: var(--accent); color: var(--bg); font-weight: 500; }
+    .btn-primary:hover { background: #79b8ff; transform: translateY(-1px); }
+    .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+
+    .btn-google { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 8px; }
+    .btn-google:hover { border-color: var(--border-hover); background: var(--surface2); }
+
+    /* divider */
+    .divider {
+      display: flex; align-items: center; gap: 10px;
+      margin: 10px 0; font-size: 9px; color: var(--muted);
+    }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* back link */
+    .back-link {
+      display: block; text-align: center;
+      font-size: 10px; color: var(--muted);
+      cursor: pointer; margin-top: 10px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--text); }
+
+    /* spinner */
+    .spinner {
+      width: 12px; height: 12px;
+      border: 2px solid rgba(0,0,0,0.2);
+      border-top-color: var(--bg);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* status */
+    .status {
+      display: flex; align-items: center; gap: 5px;
+      margin-top: 12px; padding-top: 12px;
       border-top: 1px solid var(--border);
-      font-size: 11px;
-      color: var(--muted);
+      font-size: 9px; color: var(--muted);
     }
     .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent2);
-      animation: pulse 2s infinite;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent2); animation: pulse 2s infinite;
+      flex-shrink: 0;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
   </style>
 </head>
 <body>
-  <div class="glow glow-1"></div>
-  <div class="glow glow-2"></div>
 
-  <div class="login-card">
-    <div class="terminal-bar">
-      <div class="dot dot-red"></div>
-      <div class="dot dot-yellow"></div>
-      <div class="dot dot-green"></div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<div class="card">
+
+  <!-- header -->
+  <div class="card-header">
+    <div class="dots">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
     </div>
+    <div class="brand">// OCA Assistant</div>
+  </div>
 
-    <div class="logo">// OCA Assistant</div>
-    <h1>Study Smarter.<br>Pass Faster.</h1>
-    <p class="subtitle">AI-powered RAG system for Java OCA SE 8.<br>Structured retrieval. Precise answers.</p>
+  <!-- title -->
+  <div class="title-row">
+    <div class="title" id="card-title">Welcome back</div>
+    <div class="subtitle" id="card-subtitle">Sign in to your study session</div>
+  </div>
 
-    <div class="code-snippet">
-      <span class="cm">// production RAG pipeline</span><br>
-      <span class="kw">const</span> result = <span class="fn">await</span> assistant.<span class="fn">query</span>({<br>
-      &nbsp;&nbsp;topic: <span class="str">"interfaces"</span>,<br>
-      &nbsp;&nbsp;difficulty: <span class="str">"hard"</span>,<br>
-      &nbsp;&nbsp;type: <span class="str">"practice_question"</span><br>
-      });<br>
-      <span class="cm">// recall: ~95% ✓</span>
+  <!-- tabs -->
+  <div class="tabs" id="auth-tabs">
+    <button class="tab active" onclick="switchTab('login')">$ login</button>
+    <button class="tab" onclick="switchTab('register')">$ register</button>
+  </div>
+
+  <!-- alert -->
+  <div class="alert" id="alert"></div>
+
+  <!-- LOGIN -->
+  <div class="panel active" id="panel-login">
+    <div class="field">
+      <label>email</label>
+      <input type="email" id="login-email" placeholder="you@example.com">
     </div>
-
-    <button class="google-btn" onclick="loginWithGoogle()">
-      <svg class="google-icon" viewBox="0 0 24 24">
+    <div class="field">
+      <label>password</label>
+      <div class="pw-wrap">
+        <input type="password" id="login-password" placeholder="••••••••">
+        <button class="pw-toggle" onclick="togglePw('login-password', this)">👁</button>
+      </div>
+    </div>
+    <span class="forgot-link" onclick="switchTab('forgot')">forgot password?</span>
+    <button class="btn btn-primary" id="login-btn" onclick="handleLogin()">$ sign-in --email</button>
+    <div class="divider">or</div>
+    <button class="btn btn-google" onclick="handleGoogle()">
+      <svg width="14" height="14" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -216,15 +337,252 @@
       </svg>
       $ sign-in --provider google
     </button>
-
-    <div class="status-bar">
-      <div class="status-dot"></div>
-      RAG pipeline online · Redis · Qdrant · Groq
-    </div>
-
-    <p class="footer-text">Secured with Supabase Auth · RLS enabled</p>
   </div>
 
-  <script type="module" src="auth.js"></script>
+  <!-- REGISTER -->
+  <div class="panel" id="panel-register">
+    <div class="name-row">
+      <div class="field">
+        <label>first name</label>
+        <input type="text" id="reg-firstname" placeholder="John">
+      </div>
+      <div class="field">
+        <label>last name</label>
+        <input type="text" id="reg-lastname" placeholder="Doe">
+      </div>
+    </div>
+    <div class="field">
+      <label>email</label>
+      <input type="email" id="reg-email" placeholder="you@example.com">
+    </div>
+    <div class="field">
+      <label>password</label>
+      <div class="pw-wrap">
+        <input type="password" id="reg-password" placeholder="min 8 characters" oninput="checkStrength(this.value)">
+        <button class="pw-toggle" onclick="togglePw('reg-password', this)">👁</button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+      <div class="strength-text" id="strength-text"></div>
+    </div>
+    <div class="field">
+      <label>confirm password</label>
+      <div class="pw-wrap">
+        <input type="password" id="reg-confirm" placeholder="repeat password">
+        <button class="pw-toggle" onclick="togglePw('reg-confirm', this)">👁</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="register-btn" onclick="handleRegister()">$ create-account</button>
+    <div class="divider">or</div>
+    <button class="btn btn-google" onclick="handleGoogle()">
+      <svg width="14" height="14" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      $ register --provider google
+    </button>
+  </div>
+
+  <!-- FORGOT -->
+  <div class="panel" id="panel-forgot">
+    <div class="field">
+      <label>email address</label>
+      <input type="email" id="forgot-email" placeholder="you@example.com">
+    </div>
+    <button class="btn btn-primary" id="forgot-btn" onclick="handleForgot()">$ send-reset-link</button>
+    <span class="back-link" onclick="switchTab('login')">← back to login</span>
+  </div>
+
+  <!-- status -->
+  <div class="status">
+    <div class="status-dot"></div>
+    Supabase Auth · RLS enabled · Groq · Qdrant
+  </div>
+
+</div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+  let supabase = null
+
+  async function initSupabase() {
+    if (supabase) return supabase
+    const res = await fetch('/config')
+    const config = await res.json()
+    supabase = createClient(config.supabase_url, config.supabase_anon_key)
+    return supabase
+  }
+
+  async function checkSession() {
+    const client = await initSupabase()
+    const { data: { session } } = await client.auth.getSession()
+    if (session) window.location.href = '/app'
+  }
+  checkSession()
+
+  window.switchTab = (tab) => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'))
+    hideAlert()
+
+    if (tab === 'login') {
+      document.querySelectorAll('.tab')[0].classList.add('active')
+      document.getElementById('panel-login').classList.add('active')
+      document.getElementById('card-title').textContent = 'Welcome back'
+      document.getElementById('card-subtitle').textContent = 'Sign in to your study session'
+      document.getElementById('auth-tabs').style.display = 'flex'
+    } else if (tab === 'register') {
+      document.querySelectorAll('.tab')[1].classList.add('active')
+      document.getElementById('panel-register').classList.add('active')
+      document.getElementById('card-title').textContent = 'Create account'
+      document.getElementById('card-subtitle').textContent = 'Start your Java OCA journey'
+      document.getElementById('auth-tabs').style.display = 'flex'
+    } else if (tab === 'forgot') {
+      document.getElementById('panel-forgot').classList.add('active')
+      document.getElementById('card-title').textContent = 'Reset password'
+      document.getElementById('card-subtitle').textContent = "We'll send a reset link to your inbox"
+      document.getElementById('auth-tabs').style.display = 'none'
+    }
+  }
+
+  function showAlert(msg, type = 'error') {
+    const el = document.getElementById('alert')
+    el.textContent = msg
+    el.className = `alert ${type} show`
+  }
+
+  function hideAlert() {
+    document.getElementById('alert').className = 'alert'
+  }
+
+  function setLoading(btnId, loading, originalText) {
+    const btn = document.getElementById(btnId)
+    if (loading) {
+      btn.disabled = true
+      btn.innerHTML = '<div class="spinner"></div> processing...'
+    } else {
+      btn.disabled = false
+      btn.innerHTML = originalText
+    }
+  }
+
+  window.togglePw = (inputId, btn) => {
+    const input = document.getElementById(inputId)
+    input.type = input.type === 'password' ? 'text' : 'password'
+    btn.textContent = input.type === 'password' ? '👁' : '🙈'
+  }
+
+  window.checkStrength = (pw) => {
+    const fill = document.getElementById('strength-fill')
+    const text = document.getElementById('strength-text')
+    let score = 0
+    if (pw.length >= 8) score++
+    if (/[A-Z]/.test(pw)) score++
+    if (/[0-9]/.test(pw)) score++
+    if (/[^A-Za-z0-9]/.test(pw)) score++
+    const levels = [
+      { pct: '0%', color: 'transparent', label: '' },
+      { pct: '25%', color: '#f78166', label: 'weak' },
+      { pct: '50%', color: '#e3b341', label: 'fair' },
+      { pct: '75%', color: '#58a6ff', label: 'good' },
+      { pct: '100%', color: '#3fb950', label: 'strong' },
+    ]
+    const level = levels[score]
+    fill.style.width = level.pct
+    fill.style.background = level.color
+    text.textContent = level.label
+    text.style.color = level.color
+  }
+
+  window.handleLogin = async () => {
+    const email = document.getElementById('login-email').value.trim()
+    const password = document.getElementById('login-password').value
+    hideAlert()
+    if (!email || !password) { showAlert('Please fill in all fields.'); return }
+    setLoading('login-btn', true, '$ sign-in --email')
+    const client = await initSupabase()
+    const { error } = await client.auth.signInWithPassword({ email, password })
+    if (error) {
+      showAlert(error.message)
+      setLoading('login-btn', false, '$ sign-in --email')
+    } else {
+      showAlert('Signed in! Redirecting...', 'success')
+      setTimeout(() => window.location.href = '/app', 800)
+    }
+  }
+
+  window.handleRegister = async () => {
+    const firstName = document.getElementById('reg-firstname').value.trim()
+    const lastName = document.getElementById('reg-lastname').value.trim()
+    const email = document.getElementById('reg-email').value.trim()
+    const password = document.getElementById('reg-password').value
+    const confirm = document.getElementById('reg-confirm').value
+    hideAlert()
+    if (!firstName || !lastName || !email || !password || !confirm) {
+      showAlert('Please fill in all fields.'); return
+    }
+    if (password.length < 8) { showAlert('Password must be at least 8 characters.'); return }
+    if (password !== confirm) {
+      showAlert('Passwords do not match.')
+      document.getElementById('reg-confirm').classList.add('error')
+      return
+    }
+    document.getElementById('reg-confirm').classList.remove('error')
+    setLoading('register-btn', true, '$ create-account')
+    const client = await initSupabase()
+    const { error } = await client.auth.signUp({
+      email, password,
+      options: {
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          full_name: `${firstName} ${lastName}`
+        }
+      }
+    })
+    if (error) {
+      showAlert(error.message)
+    } else {
+      showAlert('Account created! Check your email to confirm.', 'success')
+    }
+    setLoading('register-btn', false, '$ create-account')
+  }
+
+  window.handleForgot = async () => {
+    const email = document.getElementById('forgot-email').value.trim()
+    hideAlert()
+    if (!email) { showAlert('Please enter your email address.'); return }
+    setLoading('forgot-btn', true, '$ send-reset-link')
+    const client = await initSupabase()
+    const { error } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/reset-password'
+    })
+    if (error) {
+      showAlert(error.message)
+    } else {
+      showAlert('Reset link sent! Check your inbox.', 'success')
+    }
+    setLoading('forgot-btn', false, '$ send-reset-link')
+  }
+
+  window.handleGoogle = async () => {
+    const client = await initSupabase()
+    const { error } = await client.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/app' }
+    })
+    if (error) showAlert(error.message)
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return
+    const activePanel = document.querySelector('.panel.active').id
+    if (activePanel === 'panel-login') handleLogin()
+    else if (activePanel === 'panel-register') handleRegister()
+    else if (activePanel === 'panel-forgot') handleForgot()
+  })
+</script>
 </body>
 </html>

@@ -368,11 +368,24 @@
     }
     .copy-btn:hover { background: var(--border); color: var(--text); }
 
+    .msg-body pre {
+      background: var(--code-bg) !important;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 12px 0;
+      overflow: hidden;
+      overflow-x: auto;          /* horizontal scroll if needed */
+      white-space: pre;          /* preserve newlines */
+    }
+
     .msg-body pre code {
       font-family: 'JetBrains Mono', monospace !important;
       font-size: 12px !important;
       padding: 14px !important;
       display: block;
+      white-space: pre-wrap;     /* preserves newlines AND wraps long lines */
+      word-break: break-word;    /* breaks long tokens that can't wrap naturally */
+      overflow-wrap: break-word;
     }
 
     .msg-body code:not(pre code) {
@@ -600,26 +613,43 @@
   </div>
 
   <script type="module">
-    import { getSession, getToken, logout as supabaseLogout } from './auth.js';
+    import { getSession, getToken, logout as supabaseLogout } from '/static/auth.js';
 
-    const API = 'http://localhost:8000';
+    const API = ''
 
     // ── AUTH CHECK ──
     async function init() {
       const session = await getSession();
       if (!session) {
-        window.location.href = '/index.html';
+        window.location.href = '/login';
         return;
       }
+
       const email = session.user.email;
       document.getElementById('user-email').textContent = email;
       document.getElementById('user-initial').textContent = email[0].toUpperCase();
+
+      // fetch full name from profiles
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API}/profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const profile = await res.json();
+        if (profile.full_name) {
+          document.getElementById('user-email').textContent = profile.full_name;
+          document.getElementById('user-initial').textContent = profile.first_name[0].toUpperCase();
+        }
+      } catch (e) {
+        console.error('Could not load profile:', e);
+      }
+
       await loadHistory();
     }
 
     window.logout = async () => {
       await supabaseLogout();
-      window.location.href = '/index.html';
+      window.location.href = '/login';
     };
 
     // ── FILTER SUMMARY ──
@@ -666,7 +696,7 @@
       if (!question) return;
 
       const token = await getToken();
-      if (!token) { window.location.href = '/index.html'; return; }
+      if (!token) { window.location.href = '/login'; return; }
 
       // hide welcome
       const welcome = document.getElementById('welcome-screen');
@@ -776,19 +806,51 @@
 
     // ── FORMAT MESSAGE (markdown-lite) ──
     function formatMessage(text) {
-      // code blocks
-      text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
-        return `<pre><code class="language-${lang || 'java'}">${escapeHtml(code.trim())}</code></pre>`;
-      });
-      // inline code
-      text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-      // bold
-      text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      // newlines
-      text = text.replace(/\n\n/g, '</p><p>');
-      text = text.replace(/\n/g, '<br>');
-      return `<p>${text}</p>`;
+  // code blocks
+  text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const formatted = formatJavaCode(code.trim());
+    return `<pre><code class="language-${lang || 'java'}">${escapeHtml(formatted)}</code></pre>`;
+  });
+  // inline code — reformat if it looks like a class/method block
+  text = text.replace(/`([^`]+)`/g, (_, code) => {
+    if (code.includes('{') && code.length > 60) {
+      const formatted = formatJavaCode(code.trim());
+      return `<pre><code class="language-java">${escapeHtml(formatted)}</code></pre>`;
     }
+    return `<code>${code}</code>`;
+  });
+  // bold
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // newlines
+  text = text.replace(/\n\n/g, '</p><p>');
+  text = text.replace(/\n/g, '<br>');
+  return `<p>${text}</p>`;
+}
+
+function formatJavaCode(code) {
+  // if code already has real newlines, return as-is
+  if ((code.match(/\n/g) || []).length > 2) return code;
+
+  // insert newlines at Java structure boundaries
+  return code
+    .replace(/\{(?!\})/g, '{\n')           // open brace → newline
+    .replace(/\}/g, '\n}\n')               // close brace → newline
+    .replace(/;\s*/g, ';\n')               // semicolon → newline
+    .replace(/(@\w+)\s*/g, '$1\n')         // annotation → newline
+    .replace(/\n\s*\n+/g, '\n')            // collapse multiple blank lines
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .map((line, i, arr) => {
+      // indent: count unclosed braces in lines before this one
+      const before = arr.slice(0, i).join('\n');
+      const opens = (before.match(/\{/g) || []).length;
+      const closes = (before.match(/\}/g) || []).length;
+      const depth = Math.max(0, opens - closes);
+      return '    '.repeat(depth) + line;
+    })
+    .join('\n');
+}
 
     function escapeHtml(text) {
       return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');

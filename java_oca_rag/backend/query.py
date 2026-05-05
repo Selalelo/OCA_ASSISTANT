@@ -7,7 +7,7 @@ from qdrant_client.models import Filter, FieldCondition, MatchValue
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 from constants import (
-    TOPICS, DIFFICULTY, CONTENT_TYPES, 
+    TOPICS, DIFFICULTY, CONTENT_TYPES,
     COLLECTION_NAME, LLM_PROVIDER,
     GROQ_MODEL, ANTHROPIC_MODEL
 )
@@ -94,33 +94,28 @@ def build_qdrant_filter(filters: dict):
 
 def search_qdrant(user_question: str, filters: dict) -> list[str]:
     """Filter first, then rank by vector similarity"""
-    
-    # embed the question
-    query_vector = embedder.encode(user_question).tolist()
 
-    # build filter
+    query_vector = embedder.encode(user_question).tolist()
     qdrant_filter = build_qdrant_filter(filters)
 
-    # search
-    results = qdrant_client.search(
+    results = qdrant_client.query_points(
         collection_name=COLLECTION_NAME,
-        query_vector=query_vector,
+        query=query_vector,
         query_filter=qdrant_filter,
         limit=5
-    )
+    ).points
 
-    # extract text from top results
     chunks = [r.payload["text"] for r in results]
-    
+
     print(f"Retrieved {len(chunks)} chunks")
     print(f"Filters applied: {filters}")
-    
+
     return chunks
 
 
 def generate_answer(user_question: str, chunks: list[str]) -> str:
     """Send retrieved chunks + question to LLM for final answer"""
-    
+
     if not chunks:
         return "I could not find relevant information for your question. Try rephrasing or removing filters."
 
@@ -132,7 +127,30 @@ Answer questions using only the provided context.
 If the answer is not in the context, say so clearly.
 For practice questions, provide the answer and explain why.
 For concepts, be clear and concise.
-Use code examples where relevant.""",
+
+STRICT CODE FORMATTING RULES — always follow these without exception:
+- Wrap ALL code in triple backticks with the java language tag
+- Every { must be followed by a newline and indented block
+- Every } must be on its own line
+- Every statement ending in ; must be on its own line
+- Nested blocks must be indented with 4 spaces
+- NEVER write multiple statements on the same line
+- NEVER compress a class, method, or block onto one line
+
+Correct example:
+```java
+public class Dog extends Animal {
+    @Override
+    public void sound() {
+        System.out.println("The dog barks.");
+    }
+}
+```
+
+Wrong (never do this):
+```java
+public class Dog extends Animal {    @Override    public void sound() {        System.out.println("The dog barks.");    }}
+```""",
         user=f"""Context:
 {context}
 
@@ -141,15 +159,15 @@ Question: {user_question}""",
     )
 
 
-def answer_question(user_question: str) -> dict:
+def answer_question(user_question: str) -> dict[str, str | dict | int]:
     """Full query pipeline"""
-    
+
     # step 1: extract filters
     filters = extract_query_filters(user_question)
-    
+
     # step 2: search qdrant
     chunks = search_qdrant(user_question, filters)
-    
+
     # step 3: generate answer
     answer = generate_answer(user_question, chunks)
 
