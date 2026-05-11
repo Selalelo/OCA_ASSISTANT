@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OCA Assistant · Code Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #21262d;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #f78166;
+      --accent4: #e3b341;
+      --text: #e6edf3;
+      --muted: #7d8590;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      height: 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .topbar-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-decoration: none;
+    }
+    .topbar-sep { color: var(--border); }
+    .topbar-title { font-size: 12px; color: var(--muted); }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .nav-btn.primary:hover { background: #79b8ff; }
+    .nav-btn.success { background: var(--accent2); color: var(--bg); border-color: var(--accent2); }
+
+    /* ── SETUP ── */
+    #setup-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 32px;
+      padding: 40px 24px;
+      text-align: center;
+      overflow-y: auto;
+    }
+
+    .setup-icon { font-size: 48px; }
+    .setup-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+    }
+    .setup-sub { font-size: 12px; color: var(--muted); line-height: 1.8; }
+
+    .setup-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .field-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .topic-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .topic-chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 6px;
+      font-size: 10px;
+      color: var(--muted);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .topic-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .topic-chip.selected {
+      background: rgba(88,166,255,0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .difficulty-row {
+      display: flex;
+      gap: 8px;
+    }
+    .diff-chip {
+      flex: 1;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      text-align: center;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .diff-chip[data-diff="easy"].selected { background: rgba(63,185,80,0.1); border-color: var(--accent2); color: var(--accent2); }
+    .diff-chip[data-diff="medium"].selected { background: rgba(227,179,65,0.1); border-color: var(--accent4); color: var(--accent4); }
+    .diff-chip[data-diff="hard"].selected { background: rgba(247,129,102,0.1); border-color: var(--accent3); color: var(--accent3); }
+
+    .start-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent2);
+      border: none;
+      border-radius: 8px;
+      color: var(--bg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+    .start-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .start-btn:disabled { background: var(--border); color: var(--muted); transform: none; cursor: not-allowed; }
+
+    /* ── LOADING ── */
+    #loading-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 24px;
+      text-align: center;
+    }
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent2);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; color: var(--muted); }
+
+    /* ── EDITOR LAYOUT ── */
+    #editor-screen {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    .editor-topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .challenge-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .c-badge {
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .c-topic { background: rgba(88,166,255,0.1); color: var(--accent); }
+    .c-easy { background: rgba(63,185,80,0.1); color: var(--accent2); }
+    .c-medium { background: rgba(227,179,65,0.1); color: var(--accent4); }
+    .c-hard { background: rgba(247,129,102,0.1); color: var(--accent3); }
+
+    .editor-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* LEFT: problem description */
+    .problem-panel {
+      width: 380px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .problem-panel::-webkit-scrollbar { width: 4px; }
+    .problem-panel::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .panel-section-title {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .problem-desc {
+      font-size: 12px;
+      line-height: 1.9;
+      color: var(--text);
+    }
+
+    .req-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .req-list li {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+      padding-left: 14px;
+      position: relative;
+    }
+    .req-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--accent2);
+    }
+
+    .io-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .hint-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .hint-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent4);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+      cursor: pointer;
+    }
+    .hint-item.revealed { color: var(--text); }
+    .hint-item:not(.revealed)::after { content: ' (click to reveal)'; color: var(--border); }
+
+    /* RIGHT: code editor */
+    .code-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .editor-tabs {
+      display: flex;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tab {
+      padding: 8px 16px;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+    .tab:hover:not(.active) { color: var(--text); }
+
+    .editor-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #code-editor {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 20px;
+      tab-size: 4;
+    }
+
+    .solution-view {
+      display: none;
+      flex: 1;
+      overflow: auto;
+      padding: 0;
+    }
+    .solution-view pre {
+      margin: 0;
+      border-radius: 0;
+      border: none;
+      height: 100%;
+    }
+    .solution-view code {
+      padding: 20px !important;
+      font-size: 13px !important;
+      min-height: 100%;
+    }
+
+    .editor-footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .submit-btn {
+      background: var(--accent2);
+      border: none;
+      color: var(--bg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .submit-btn:hover { opacity: 0.9; }
+    .submit-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+    .editor-hint {
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    /* ── FEEDBACK PANEL ── */
+    #feedback-panel {
+      display: none;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      max-height: 260px;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .feedback-inner {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .feedback-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .feedback-score {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+    }
+    .feedback-score.pass { color: var(--accent2); }
+    .feedback-score.fail { color: var(--accent3); }
+
+    .feedback-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .feedback-sub { font-size: 11px; color: var(--muted); }
+
+    .feedback-text {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .feedback-lists {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .feedback-list-title {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .feedback-list-title.issues { color: var(--accent3); }
+    .feedback-list-title.suggestions { color: var(--accent2); }
+
+    .feedback-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .feedback-list li {
+      font-size: 11px;
+      color: var(--muted);
+      padding-left: 12px;
+      position: relative;
+      line-height: 1.6;
+    }
+    .feedback-list.issues li::before { content: '✗'; position: absolute; left: 0; color: var(--accent3); }
+    .feedback-list.suggestions li::before { content: '→'; position: absolute; left: 0; color: var(--accent2); }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <a href="/app" class="topbar-logo">⬡ OCA</a>
+    <span class="topbar-sep">/</span>
+    <span class="topbar-title">code challenge</span>
+    <div class="topbar-right">
+      <a href="/quiz" class="nav-btn">📋 quiz</a>
+      <a href="/app" class="nav-btn">← dashboard</a>
+    </div>
+  </div>
+
+  <!-- SETUP -->
+  <div id="setup-screen">
+    <div class="setup-icon">⚡</div>
+    <div>
+      <div class="setup-title">Code Challenge</div>
+      <div class="setup-sub">Write Java code · get instant AI feedback · level up</div>
+    </div>
+    <div class="setup-card">
+      <div>
+        <div class="field-label">// select topic</div>
+        <div class="topic-grid" id="topic-grid">
+          <div class="topic-chip selected" data-topic="OOP">OOP</div>
+          <div class="topic-chip" data-topic="inheritance">inheritance</div>
+          <div class="topic-chip" data-topic="interfaces">interfaces</div>
+          <div class="topic-chip" data-topic="exceptions">exceptions</div>
+          <div class="topic-chip" data-topic="strings">strings</div>
+          <div class="topic-chip" data-topic="arrays">arrays</div>
+          <div class="topic-chip" data-topic="methods">methods</div>
+          <div class="topic-chip" data-topic="constructors">constructors</div>
+          <div class="topic-chip" data-topic="data_types">data types</div>
+          <div class="topic-chip" data-topic="operators">operators</div>
+          <div class="topic-chip" data-topic="control_flow">control flow</div>
+          <div class="topic-chip" data-topic="enums">enums</div>
+          <div class="topic-chip" data-topic="lambdas">lambdas</div>
+        </div>
+      </div>
+      <button class="start-btn" id="start-btn" onclick="startChallenge()">
+        ⚡ generate challenge
+      </button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading-screen">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Generating challenge...</div>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editor-screen">
+
+    <div class="editor-topbar">
+      <div class="challenge-title" id="challenge-title">—</div>
+      <span class="c-badge c-topic" id="badge-topic">—</span>
+      <span class="c-badge" id="badge-diff">—</span>
+      <button class="nav-btn" onclick="newChallenge()">↺ new</button>
+    </div>
+
+    <div class="editor-body">
+
+      <!-- PROBLEM PANEL -->
+      <div class="problem-panel">
+
+        <div>
+          <div class="panel-section-title">// description</div>
+          <div class="problem-desc" id="problem-desc">—</div>
+        </div>
+
+        <div>
+          <div class="panel-section-title">// requirements</div>
+          <ul class="req-list" id="req-list"></ul>
+        </div>
+
+        <div id="io-section">
+          <div class="panel-section-title">// expected output</div>
+          <div class="io-box" id="io-box">—</div>
+        </div>
+
+        <div>
+          <div class="panel-section-title">// hints</div>
+          <div class="hint-list" id="hint-list"></div>
+        </div>
+
+      </div>
+
+      <!-- CODE PANEL -->
+      <div class="code-panel">
+
+        <div class="editor-tabs">
+          <div class="tab active" id="tab-editor" onclick="switchTab('editor')">Solution.java</div>
+          <div class="tab" id="tab-solution" onclick="switchTab('solution')" style="display:none">
+            Model Solution
+          </div>
+        </div>
+
+        <div class="editor-wrapper">
+          <textarea id="code-editor" spellcheck="false" placeholder="// write your Java solution here..."></textarea>
+          <div class="solution-view" id="solution-view">
+            <pre><code class="language-java" id="solution-code"></code></pre>
+          </div>
+        </div>
+
+        <div id="feedback-panel">
+          <div class="feedback-inner">
+            <div class="feedback-header">
+              <div class="feedback-score" id="fb-score">—</div>
+              <div>
+                <div class="feedback-title" id="fb-title">—</div>
+                <div class="feedback-sub" id="fb-sub">—</div>
+              </div>
+            </div>
+            <div class="feedback-text" id="fb-feedback">—</div>
+            <div class="feedback-lists">
+              <div>
+                <div class="feedback-list-title issues">issues</div>
+                <ul class="feedback-list issues" id="fb-issues"></ul>
+              </div>
+              <div>
+                <div class="feedback-list-title suggestions">suggestions</div>
+                <ul class="feedback-list suggestions" id="fb-suggestions"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-footer">
+          <button class="submit-btn" id="submit-btn" onclick="submitCode()">
+            ▶ submit &amp; evaluate
+          </button>
+          <button class="nav-btn" onclick="resetCode()">reset</button>
+          <div class="editor-hint">tab = 4 spaces</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getToken } from '/static/auth.js';
+
+    const API = '';
+    let currentChallenge = null;
+    let selectedTopic = 'OOP';
+
+    // ── TOPIC SELECTION ──
+    document.getElementById('topic-grid').addEventListener('click', (e) => {
+      const chip = e.target.closest('.topic-chip');
+      if (!chip) return;
+      document.querySelectorAll('.topic-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedTopic = chip.dataset.topic;
+    });
+
+    // ── TAB KEY in textarea ──
+    document.getElementById('code-editor').addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const ta = e.target;
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        ta.value = ta.value.substring(0, start) + '    ' + ta.value.substring(end);
+        ta.selectionStart = ta.selectionEnd = start + 4;
+      }
+    });
+
+    // ── START CHALLENGE ──
+    window.startChallenge = async () => {
+      const token = await getToken();
+      if (!token) { window.location.href = '/login'; return; }
+
+      document.getElementById('setup-screen').style.display = 'none';
+      document.getElementById('loading-screen').style.display = 'flex';
+
+      try {
+        const res = await fetch(`${API}/challenge/generate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ topic: selectedTopic })
+        });
+
+        currentChallenge = await res.json();
+        renderChallenge(currentChallenge);
+
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('editor-screen').style.display = 'flex';
+
+      } catch (err) {
+        alert('Failed to generate challenge: ' + err.message);
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('setup-screen').style.display = 'flex';
+      }
+    };
+
+    function renderChallenge(c) {
+      document.getElementById('challenge-title').textContent = c.title;
+      document.getElementById('badge-topic').textContent = c.topic;
+
+      const diffEl = document.getElementById('badge-diff');
+      diffEl.textContent = c.difficulty;
+      diffEl.className = `c-badge c-${c.difficulty}`;
+
+      document.getElementById('problem-desc').textContent = c.description;
+
+      document.getElementById('req-list').innerHTML = (c.requirements || [])
+        .map(r => `<li>${r}</li>`).join('');
+
+      const ioBox = document.getElementById('io-box');
+      if (c.example_output) {
+        ioBox.textContent = c.example_output;
+        document.getElementById('io-section').style.display = 'block';
+      } else {
+        document.getElementById('io-section').style.display = 'none';
+      }
+
+      document.getElementById('hint-list').innerHTML = (c.hints || [])
+        .map((h, i) => `<div class="hint-item" data-hint="${i}" onclick="revealHint(this)">${h}</div>`)
+        .join('');
+
+      document.getElementById('code-editor').value = c.starter_code || '';
+
+      // hide solution tab until failed
+      document.getElementById('tab-solution').style.display = 'none';
+      document.getElementById('feedback-panel').style.display = 'none';
+      switchTab('editor');
+    }
+
+    window.revealHint = (el) => { el.classList.add('revealed'); };
+
+    window.switchTab = (tab) => {
+      const editor = document.getElementById('code-editor');
+      const solutionView = document.getElementById('solution-view');
+      document.getElementById('tab-editor').classList.toggle('active', tab === 'editor');
+      document.getElementById('tab-solution').classList.toggle('active', tab === 'solution');
+
+      if (tab === 'editor') {
+        editor.style.display = 'block';
+        solutionView.style.display = 'none';
+      } else {
+        editor.style.display = 'none';
+        solutionView.style.display = 'flex';
+        // set solution code
+        const codeEl = document.getElementById('solution-code');
+        if (currentChallenge?.solution && !codeEl.dataset.highlighted) {
+          codeEl.textContent = currentChallenge.solution;
+          hljs.highlightElement(codeEl);
+          codeEl.dataset.highlighted = 'yes';
+        }
+      }
+    };
+
+    // ── SUBMIT ──
+    window.submitCode = async () => {
+      const token = await getToken();
+      if (!token) return;
+
+      const userCode = document.getElementById('code-editor').value.trim();
+      if (!userCode || userCode === currentChallenge?.starter_code?.trim()) {
+        alert('Please write your solution before submitting.');
+        return;
+      }
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ evaluating...';
+
+      try {
+        const res = await fetch(`${API}/challenge/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            challenge: currentChallenge,
+            user_code: userCode
+          })
+        });
+
+        const result = await res.json();
+        renderFeedback(result);
+
+      } catch (err) {
+        alert('Evaluation failed: ' + err.message);
+      }
+
+      btn.disabled = false;
+      btn.textContent = '▶ submit & evaluate';
+    };
+
+    function renderFeedback(result) {
+      const passed = result.passed;
+      const score = result.score ?? 0;
+
+      document.getElementById('fb-score').textContent = score + '/100';
+      document.getElementById('fb-score').className = `feedback-score ${passed ? 'pass' : 'fail'}`;
+      document.getElementById('fb-title').textContent = passed ? '✓ Challenge Passed!' : '✗ Not quite';
+      document.getElementById('fb-sub').textContent = passed
+        ? 'Great work! Your solution looks correct.'
+        : 'Review the feedback and try again.';
+
+      document.getElementById('fb-feedback').textContent = result.feedback || '';
+
+      document.getElementById('fb-issues').innerHTML = (result.issues || [])
+        .map(i => `<li>${i}</li>`).join('') || '<li style="color:var(--accent2)">No issues found</li>';
+
+      document.getElementById('fb-suggestions').innerHTML = (result.suggestions || [])
+        .map(s => `<li>${s}</li>`).join('') || '<li>Keep it up!</li>';
+
+      document.getElementById('feedback-panel').style.display = 'block';
+
+      // show solution tab if failed
+      if (!passed && currentChallenge?.solution) {
+        document.getElementById('tab-solution').style.display = 'block';
+      }
+    }
+
+    window.resetCode = () => {
+      if (currentChallenge) {
+        document.getElementById('code-editor').value = currentChallenge.starter_code || '';
+        document.getElementById('feedback-panel').style.display = 'none';
+      }
+    };
+
+    window.newChallenge = () => {
+      document.getElementById('editor-screen').style.display = 'none';
+      document.getElementById('setup-screen').style.display = 'flex';
+      currentChallenge = null;
+    };
+  </script>
+</body>
+</html>

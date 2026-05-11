@@ -44,6 +44,24 @@ def llm_call(system: str, user: str, max_tokens: int = 1000) -> str:
         return response.content[0].text
 
 
+def is_casual_message(text: str) -> bool:
+    """Quick heuristic to detect casual/social messages before hitting the LLM pipeline."""
+    casual_patterns = [
+        "thank", "thanks", "okay", "ok cool", "got it", "nice", "great",
+        "awesome", "cool", "perfect", "understood", "makes sense", "cheers",
+        "hi", "hello", "hey", "bye", "goodbye", "see you", "good morning",
+        "good evening", "good night", "good luck", "you're welcome", "no problem",
+        "np", "lol", "haha", "wow", "yes", "no", "sure", "alright"
+    ]
+    lower = text.strip().lower()
+    # Short messages under 8 words that match casual patterns
+    if len(lower.split()) <= 8:
+        for pattern in casual_patterns:
+            if pattern in lower:
+                return True
+    return False
+
+
 def extract_query_filters(user_question: str) -> dict:
     """LLM extracts structured filters from natural language question"""
     result = llm_call(
@@ -116,51 +134,61 @@ def search_qdrant(user_question: str, filters: dict) -> list[str]:
 def generate_answer(user_question: str, chunks: list[str]) -> str:
     """Send retrieved chunks + question to LLM for final answer"""
 
-    if not chunks:
-        return "I could not find relevant information for your question. Try rephrasing or removing filters."
-
-    context = "\n\n---\n\n".join(chunks)
+    context = "\n\n---\n\n".join(chunks) if chunks else ""
 
     return llm_call(
-        system="""You are a Java OCA SE 8 study assistant.
-Answer questions using only the provided context.
-If the answer is not in the context, say so clearly.
-For practice questions, provide the answer and explain why.
-For concepts, be clear and concise.
+        system="""You are a friendly Java OCA SE 8 study assistant.
 
-STRICT CODE FORMATTING RULES — always follow these without exception:
-- Wrap ALL code in triple backticks with the java language tag
-- Every { must be followed by a newline and indented block
-- Every } must be on its own line
-- Every statement ending in ; must be on its own line
-- Nested blocks must be indented with 4 spaces
-- NEVER write multiple statements on the same line
-- NEVER compress a class, method, or block onto one line
+First, decide what kind of message you're dealing with:
 
-Correct example:
-```java
-public class Dog extends Animal {
-    @Override
-    public void sound() {
-        System.out.println("The dog barks.");
-    }
-}
-```
+1. CASUAL / SOCIAL (greetings, thanks, "okay cool", "got it", "nice", "makes sense", etc.)
+   → Reply naturally and briefly, like a helpful tutor would. Ignore the context.
+   → Keep it warm and encouraging. 1-3 sentences max.
+   → Examples: "Thanks!" → "You're welcome! Let me know if anything else comes up."
+                "okay cool" → "Great! Feel free to ask whenever you're ready to dive into the next topic."
 
-Wrong (never do this):
-```java
-public class Dog extends Animal {    @Override    public void sound() {        System.out.println("The dog barks.");    }}
-```""",
+2. STUDY QUESTION (concepts, code, practice questions, explanations)
+   → Use the provided context to answer clearly and concisely.
+   → Do NOT reproduce raw quiz questions or answer lists from the context.
+   → Explain concepts, give examples, and teach — don't dump source material.
+   → If the context is empty or irrelevant, answer from your own Java OCA knowledge.
+
+   STRICT CODE FORMATTING RULES for study answers:
+   - Wrap ALL code in triple backticks with the java language tag
+   - Every { must be followed by a newline and indented block
+   - Every } must be on its own line
+   - Every statement ending in ; must be on its own line
+   - Nested blocks must be indented with 4 spaces
+   - NEVER write multiple statements on the same line
+
+   Correct example:
+   ```java
+   public class Dog extends Animal {
+       @Override
+       public void sound() {
+           System.out.println("The dog barks.");
+       }
+   }
+   ```""",
         user=f"""Context:
 {context}
 
-Question: {user_question}""",
+Message: {user_question}""",
         max_tokens=1000
     )
 
 
 def answer_question(user_question: str) -> dict[str, str | dict | int]:
     """Full query pipeline"""
+
+    # Short-circuit for casual messages — skip RAG entirely
+    if is_casual_message(user_question):
+        answer = generate_answer(user_question, [])
+        return {
+            "answer": answer,
+            "filters": {"topic": None, "difficulty": None, "content_type": None},
+            "chunks_retrieved": 0
+        }
 
     # step 1: extract filters
     filters = extract_query_filters(user_question)

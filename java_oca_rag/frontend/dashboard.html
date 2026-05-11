@@ -6,7 +6,6 @@
   <title>OCA Assistant · Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
-  <!-- highlight.js for VSCode-style syntax highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
@@ -64,6 +63,31 @@
       flex: 1;
     }
     .topbar-path span { color: var(--text); }
+
+    /* ── NAV BUTTONS (NEW) ── */
+    .topbar-nav {
+      display: flex;
+      gap: 8px;
+      margin-right: 4px;
+    }
+    .topbar-nav-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .topbar-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .topbar-nav-btn.quiz:hover { border-color: var(--accent4); color: var(--accent4); }
+    .topbar-nav-btn.challenge:hover { border-color: var(--accent2); color: var(--accent2); }
 
     .user-pill {
       display: flex;
@@ -154,22 +178,6 @@
     }
     .filter-select:focus { outline: none; border-color: var(--accent); }
 
-    .filter-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 20px;
-      margin: 2px;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.15s;
-    }
-    .tag-topic { background: rgba(88,166,255,0.1); color: var(--accent); border-color: rgba(88,166,255,0.2); }
-    .tag-difficulty { background: rgba(227,179,65,0.1); color: var(--accent4); border-color: rgba(227,179,65,0.2); }
-    .tag-type { background: rgba(63,185,80,0.1); color: var(--accent2); border-color: rgba(63,185,80,0.2); }
-
     /* history list */
     .history-list {
       flex: 1;
@@ -177,8 +185,7 @@
       padding: 8px;
     }
     .history-list::-webkit-scrollbar { width: 4px; }
-    .history-list::-webkit-scrollbar-track { background: transparent; }
-    .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .history-list::-webkit-scrollbar-thumb { background: var(--border); }
 
     .history-item {
       padding: 8px 10px;
@@ -229,8 +236,7 @@
       gap: 20px;
     }
     .chat-messages::-webkit-scrollbar { width: 4px; }
-    .chat-messages::-webkit-scrollbar-track { background: transparent; }
-    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); }
 
     /* welcome screen */
     .welcome {
@@ -328,13 +334,14 @@
     .msg-body p { margin-bottom: 12px; }
     .msg-body p:last-child { margin-bottom: 0; }
 
-    /* VSCode-style code blocks */
     .msg-body pre {
       background: var(--code-bg) !important;
       border: 1px solid var(--border);
       border-radius: 8px;
       margin: 12px 0;
       overflow: hidden;
+      overflow-x: auto;
+      white-space: pre;
     }
 
     .code-header {
@@ -368,23 +375,13 @@
     }
     .copy-btn:hover { background: var(--border); color: var(--text); }
 
-    .msg-body pre {
-      background: var(--code-bg) !important;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      margin: 12px 0;
-      overflow: hidden;
-      overflow-x: auto;          /* horizontal scroll if needed */
-      white-space: pre;          /* preserve newlines */
-    }
-
     .msg-body pre code {
       font-family: 'JetBrains Mono', monospace !important;
       font-size: 12px !important;
       padding: 14px !important;
       display: block;
-      white-space: pre-wrap;     /* preserves newlines AND wraps long lines */
-      word-break: break-word;    /* breaks long tokens that can't wrap naturally */
+      white-space: pre-wrap;
+      word-break: break-word;
       overflow-wrap: break-word;
     }
 
@@ -397,7 +394,6 @@
       color: var(--accent3);
     }
 
-    /* filter pills shown on message */
     .filter-pills {
       display: flex;
       gap: 6px;
@@ -414,7 +410,6 @@
     .pill-diff { background: rgba(227,179,65,0.1); color: var(--accent4); }
     .pill-type { background: rgba(63,185,80,0.1); color: var(--accent2); }
 
-    /* thinking indicator */
     .thinking {
       display: flex;
       gap: 4px;
@@ -503,7 +498,6 @@
       color: var(--muted);
     }
 
-    /* ── SCROLLBAR ── */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -517,6 +511,14 @@
     <div class="topbar-path">
       workspace / <span>java-oca-se8</span> / <span>study-session</span>
     </div>
+
+    <!-- NAV BUTTONS -->
+    <div class="topbar-nav">
+  <a href="/quiz" class="topbar-nav-btn quiz">📋 quiz</a>
+  <a href="/challenge" class="topbar-nav-btn challenge">⚡ challenge</a>
+  <a href="/progress" class="topbar-nav-btn" style="border-color:var(--accent5);color:var(--accent5)">📊 progress</a>
+</div>
+
     <div class="user-pill">
       <div class="user-avatar" id="user-initial">?</div>
       <span id="user-email">loading...</span>
@@ -617,7 +619,6 @@
 
     const API = ''
 
-    // ── AUTH CHECK ──
     async function init() {
       const session = await getSession();
       if (!session) {
@@ -629,7 +630,6 @@
       document.getElementById('user-email').textContent = email;
       document.getElementById('user-initial').textContent = email[0].toUpperCase();
 
-      // fetch full name from profiles
       try {
         const token = await getToken();
         const res = await fetch(`${API}/profile`, {
@@ -638,7 +638,8 @@
         const profile = await res.json();
         if (profile.full_name) {
           document.getElementById('user-email').textContent = profile.full_name;
-          document.getElementById('user-initial').textContent = profile.first_name[0].toUpperCase();
+          const initial = profile.first_name?.[0] ?? profile.full_name[0];
+          document.getElementById('user-initial').textContent = initial.toUpperCase();
         }
       } catch (e) {
         console.error('Could not load profile:', e);
@@ -652,7 +653,6 @@
       window.location.href = '/login';
     };
 
-    // ── FILTER SUMMARY ──
     function updateFilterSummary() {
       const topic = document.getElementById('filter-topic').value;
       const diff = document.getElementById('filter-difficulty').value;
@@ -669,13 +669,11 @@
       document.getElementById(id).addEventListener('change', updateFilterSummary);
     });
 
-    // ── CHIPS ──
     window.useChip = (el) => {
       document.getElementById('user-input').value = el.textContent;
       sendMessage();
     };
 
-    // ── AUTO RESIZE TEXTAREA ──
     const textarea = document.getElementById('user-input');
     textarea.addEventListener('input', () => {
       textarea.style.height = 'auto';
@@ -689,7 +687,6 @@
       }
     });
 
-    // ── SEND MESSAGE ──
     window.sendMessage = async () => {
       const input = document.getElementById('user-input');
       const question = input.value.trim();
@@ -698,27 +695,22 @@
       const token = await getToken();
       if (!token) { window.location.href = '/login'; return; }
 
-      // hide welcome
       const welcome = document.getElementById('welcome-screen');
       if (welcome) welcome.remove();
 
-      // get filters
       const filters = {
         topic: document.getElementById('filter-topic').value || null,
         difficulty: document.getElementById('filter-difficulty').value || null,
         content_type: document.getElementById('filter-type').value || null,
       };
 
-      // render user message
       appendMessage('user', question, null, filters);
       input.value = '';
       input.style.height = 'auto';
 
-      // disable send
       const btn = document.getElementById('send-btn');
       btn.disabled = true;
 
-      // show thinking
       const thinkingId = showThinking();
 
       try {
@@ -744,7 +736,6 @@
       btn.disabled = false;
     };
 
-    // ── RENDER MESSAGE ──
     function appendMessage(role, text, source, filters) {
       const container = document.getElementById('chat-messages');
       const div = document.createElement('div');
@@ -753,7 +744,6 @@
       const isUser = role === 'user';
       const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // filter pills
       let filterPills = '';
       if (filters && (filters.topic || filters.difficulty || filters.content_type)) {
         filterPills = '<div class="filter-pills">';
@@ -763,7 +753,6 @@
         filterPills += '</div>';
       }
 
-      // source badge
       let badge = '';
       if (source === 'cache') badge = '<span class="msg-badge badge-cache">⚡ CACHED</span>';
       if (source === 'rag') badge = '<span class="msg-badge badge-rag">🔍 RAG</span>';
@@ -784,19 +773,22 @@
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
 
-      // highlight code blocks
-      div.querySelectorAll('pre code').forEach(block => {
+      div.querySelectorAll('pre code[data-raw]').forEach(block => {
+        block.textContent = decodeURIComponent(block.dataset.raw);
+        block.removeAttribute('data-raw');
         hljs.highlightElement(block);
 
-        // add copy button to each code block
         const pre = block.parentElement;
-        const lang = block.className.replace('language-', '').split(' ')[0] || 'java';
+        const lang = [...block.classList]
+          .find(c => c.startsWith('language-'))
+          ?.replace('language-', '') || 'java';
+
         const header = document.createElement('div');
         header.className = 'code-header';
         header.innerHTML = `
           <div class="code-lang">
             <div class="lang-dot"></div>
-            ${lang}
+            ${escapeHtml(lang)}
           </div>
           <button class="copy-btn" onclick="copyCode(this)">copy</button>
         `;
@@ -804,53 +796,47 @@
       });
     }
 
-    // ── FORMAT MESSAGE (markdown-lite) ──
     function formatMessage(text) {
-  // code blocks
-  text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => {
-    const formatted = formatJavaCode(code.trim());
-    return `<pre><code class="language-${lang || 'java'}">${escapeHtml(formatted)}</code></pre>`;
-  });
-  // inline code — reformat if it looks like a class/method block
-  text = text.replace(/`([^`]+)`/g, (_, code) => {
-    if (code.includes('{') && code.length > 60) {
-      const formatted = formatJavaCode(code.trim());
-      return `<pre><code class="language-java">${escapeHtml(formatted)}</code></pre>`;
+      text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => {
+        const formatted = formatJavaCode(code.trim());
+        return `<pre><code class="language-${lang || 'java'}" data-raw="${encodeURIComponent(formatted)}"></code></pre>`;
+      });
+
+      text = text.replace(/`([^`]+)`/g, (_, code) => {
+        if (code.includes('{') && code.length > 60) {
+          const formatted = formatJavaCode(code.trim());
+          return `<pre><code class="language-java" data-raw="${encodeURIComponent(formatted)}"></code></pre>`;
+        }
+        return `<code>${escapeHtml(code)}</code>`;
+      });
+
+      text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      text = text.replace(/\n\n/g, '</p><p>');
+      text = text.replace(/\n/g, '<br>');
+      return `<p>${text}</p>`;
     }
-    return `<code>${code}</code>`;
-  });
-  // bold
-  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // newlines
-  text = text.replace(/\n\n/g, '</p><p>');
-  text = text.replace(/\n/g, '<br>');
-  return `<p>${text}</p>`;
-}
 
-function formatJavaCode(code) {
-  // if code already has real newlines, return as-is
-  if ((code.match(/\n/g) || []).length > 2) return code;
+    function formatJavaCode(code) {
+      if ((code.match(/\n/g) || []).length > 2) return code;
 
-  // insert newlines at Java structure boundaries
-  return code
-    .replace(/\{(?!\})/g, '{\n')           // open brace → newline
-    .replace(/\}/g, '\n}\n')               // close brace → newline
-    .replace(/;\s*/g, ';\n')               // semicolon → newline
-    .replace(/(@\w+)\s*/g, '$1\n')         // annotation → newline
-    .replace(/\n\s*\n+/g, '\n')            // collapse multiple blank lines
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .map((line, i, arr) => {
-      // indent: count unclosed braces in lines before this one
-      const before = arr.slice(0, i).join('\n');
-      const opens = (before.match(/\{/g) || []).length;
-      const closes = (before.match(/\}/g) || []).length;
-      const depth = Math.max(0, opens - closes);
-      return '    '.repeat(depth) + line;
-    })
-    .join('\n');
-}
+      return code
+        .replace(/\{(?!\})/g, '{\n')
+        .replace(/\}/g, '\n}\n')
+        .replace(/;\s*/g, ';\n')
+        .replace(/(@\w+)\s*/g, '$1\n')
+        .replace(/\n\s*\n+/g, '\n')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map((line, i, arr) => {
+          const before = arr.slice(0, i).join('\n');
+          const depth = Math.max(0,
+            (before.match(/\{/g) || []).length - (before.match(/\}/g) || []).length
+          );
+          return '    '.repeat(depth) + line;
+        })
+        .join('\n');
+    }
 
     function escapeHtml(text) {
       return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -863,7 +849,6 @@ function formatJavaCode(code) {
       setTimeout(() => btn.textContent = 'copy', 2000);
     };
 
-    // ── THINKING INDICATOR ──
     function showThinking() {
       const id = 'thinking-' + Date.now();
       const container = document.getElementById('chat-messages');
@@ -886,7 +871,6 @@ function formatJavaCode(code) {
       document.getElementById(id)?.remove();
     }
 
-    // ── LOAD HISTORY ──
     async function loadHistory() {
       const token = await getToken();
       if (!token) return;

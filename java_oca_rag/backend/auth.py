@@ -1,12 +1,18 @@
 import os
 import httpx
+from typing import cast
 from fastapi import HTTPException, Header
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_URL = cast(str, os.getenv("SUPABASE_URL"))
+SUPABASE_ANON_KEY = cast(str, os.getenv("SUPABASE_ANON_KEY"))
+SUPABASE_SERVICE_KEY = cast(str, os.getenv("SUPABASE_SERVICE_KEY"))
+
+assert SUPABASE_URL is not None, "SUPABASE_URL environment variable is required"
+assert SUPABASE_ANON_KEY is not None, "SUPABASE_ANON_KEY environment variable is required"
+assert SUPABASE_SERVICE_KEY is not None, "SUPABASE_SERVICE_KEY environment variable is required"
 
 
 async def verify_token(authorization: str = Header(...)) -> dict:
@@ -55,7 +61,7 @@ async def save_chat_history(
             f"{SUPABASE_URL}/rest/v1/chat_history",
             headers={
                 "apikey": SUPABASE_ANON_KEY,
-                "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                 "Content-Type": "application/json",
                 "Prefer": "return=minimal"
             },
@@ -73,24 +79,22 @@ async def save_chat_history(
             print(f"Warning: failed to save chat history: {response.text}")
 
 
-async def get_chat_history(user_id: str, limit: int = 50) -> list:
-    """Fetch user chat history from Supabase"""
+async def get_chat_history(user_id: str) -> list:
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{SUPABASE_URL}/rest/v1/chat_history",
             headers={
                 "apikey": SUPABASE_ANON_KEY,
-                "Authorization": f"Bearer {SUPABASE_ANON_KEY}"
+                "Authorization": f"Bearer {os.getenv('SUPABASE_SERVICE_KEY')}",
             },
             params={
                 "user_id": f"eq.{user_id}",
                 "order": "created_at.desc",
-                "limit": str(limit)
+                "limit": "20"
             }
         )
-
-        if response.status_code != 200:
-            print(f"Warning: failed to fetch chat history: {response.text}")
-            return []
-
-        return response.json()
+        print(f"History fetch status: {response.status_code}")
+        print(f"History fetch response: {response.text[:300]}")  # first 300 chars
+        if response.status_code == 200:
+            return response.json()
+        return []
