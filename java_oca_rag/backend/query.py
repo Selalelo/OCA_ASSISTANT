@@ -111,10 +111,21 @@ def build_qdrant_filter(filters: dict):
 
 
 def search_qdrant(user_question: str, filters: dict) -> list[str]:
-    """Filter first, then rank by vector similarity"""
-
     query_vector = embedder.encode(user_question).tolist()
     qdrant_filter = build_qdrant_filter(filters)
+
+    # Exclude practice questions from chat — only quiz.py should get these
+    if not filters.get("content_type"):
+        from qdrant_client.models import FieldCondition, MatchValue
+        exclusion_condition = FieldCondition(
+            key="content_type",
+            match=MatchValue(value="practice_question")
+        )
+        if qdrant_filter:
+            qdrant_filter.must_not = [exclusion_condition]
+        else:
+            from qdrant_client.models import Filter
+            qdrant_filter = Filter(must_not=[exclusion_condition])
 
     results = qdrant_client.query_points(
         collection_name=COLLECTION_NAME,
@@ -123,18 +134,56 @@ def search_qdrant(user_question: str, filters: dict) -> list[str]:
         limit=5
     ).points
 
-    chunks = [r.payload["text"] for r in results]
-
-    print(f"Retrieved {len(chunks)} chunks")
-    print(f"Filters applied: {filters}")
-
-    return chunks
+    return [r.payload["text"] for r in results]
 
 
 def generate_answer(user_question: str, chunks: list[str]) -> str:
-    """Send retrieved chunks + question to LLM for final answer"""
-
     context = "\n\n---\n\n".join(chunks) if chunks else ""
+
+    if is_casual_message(user_question):
+        return llm_call(
+            system="You are a friendly study tutor. Reply naturally and briefly. 1-3 sentences max.",
+            user=user_question,
+            max_tokens=100
+        )
+
+    return llm_call(
+    system="""You are a Java OCA SE 8 study assistant. You only teach Java.
+
+STRICT RULES:
+1. Answer ONLY the question the user asked. Never answer questions the user did not ask.
+2. If the context contains multiple choice questions or answer options (A/B/C/D), IGNORE them completely.
+3. Never reproduce or discuss quiz questions from context unless the user explicitly asked for a quiz.
+4. Use context only for factual background — concepts, rules, examples.
+5. If context is irrelevant, answer from your own Java OCA knowledge.
+6. ALWAYS use Java for code examples. Never use Python, JavaScript, or any other language.
+
+CODE FORMATTING — MANDATORY:
+- Every code example must use ```java fenced blocks
+- Proper indentation: 4 spaces per level
+- One statement per line
+- Opening brace { on the same line as the declaration
+- Closing brace } on its own line
+
+RESPONSE LENGTH:
+- For broad topics (e.g. "teach me inheritance"), write a complete structured explanation
+- Cover: definition, syntax, key rules, examples, common gotchas
+- Do not truncate mid-example""",
+    user=f"""Context:
+{context}
+
+User question: {user_question}""",
+    max_tokens=2000  # increase from 1000 — broad questions need more room
+)
+    context = "\n\n---\n\n".join(chunks) if chunks else ""
+
+    # Separate prompt for casual messages
+    if not chunks and is_casual_message(user_question):
+        return llm_call(
+            system="You are a friendly study tutor. Reply naturally and briefly to casual messages. 1-3 sentences max.",
+            user=user_question,
+            max_tokens=100
+        )
 
     return llm_call(
         system="""You are a friendly Java OCA SE 8 study assistant.

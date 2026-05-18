@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OCA Assistant · Quiz</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
   <style>
     :root {
       --bg: #0d1117;
@@ -15,8 +18,10 @@
       --accent2: #3fb950;
       --accent3: #f78166;
       --accent4: #e3b341;
+      --accent5: #bc8cff;
       --text: #e6edf3;
       --muted: #7d8590;
+      --code-bg: #0d1117;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -70,7 +75,7 @@
       transition: all 0.2s;
     }
     .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .nav-btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .nav-btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 700; }
     .nav-btn.primary:hover { background: #79b8ff; }
 
     /* ── TIMER BAR ── */
@@ -104,18 +109,14 @@
       gap: 32px;
       text-align: center;
     }
-
     .setup-icon { font-size: 48px; }
-
     .setup-title {
       font-family: 'Syne', sans-serif;
       font-size: 28px;
       font-weight: 800;
       color: var(--text);
     }
-
     .setup-sub { font-size: 12px; color: var(--muted); line-height: 1.8; }
-
     .setup-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -127,7 +128,6 @@
       flex-direction: column;
       gap: 20px;
     }
-
     .field-label {
       font-size: 10px;
       letter-spacing: 2px;
@@ -135,13 +135,11 @@
       color: var(--muted);
       margin-bottom: 8px;
     }
-
     .topic-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
     }
-
     .topic-chip {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -169,7 +167,6 @@
       background: rgba(63,185,80,0.15);
       border-color: var(--accent2);
     }
-
     .start-btn {
       width: 100%;
       padding: 14px;
@@ -197,17 +194,14 @@
       gap: 24px;
       text-align: center;
     }
-
     .loading-spinner {
-      width: 40px;
-      height: 40px;
+      width: 40px; height: 40px;
       border: 3px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     .loading-text { font-size: 13px; color: var(--muted); }
     .loading-sub { font-size: 11px; color: var(--border); }
 
@@ -218,22 +212,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 32px;
+      margin-bottom: 20px;
     }
-
-    .quiz-progress {
-      font-size: 11px;
-      color: var(--muted);
-    }
+    .quiz-progress { font-size: 11px; color: var(--muted); }
     .quiz-progress span { color: var(--accent); font-weight: 700; }
-
-    .quiz-timer {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      color: var(--text);
-    }
+    .quiz-timer { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text); }
     .quiz-timer.warning { color: var(--accent4); }
     .quiz-timer.danger { color: var(--accent3); }
 
@@ -241,11 +224,10 @@
       display: flex;
       gap: 4px;
       flex-wrap: wrap;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
     .dot {
-      width: 8px;
-      height: 8px;
+      width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--border);
       transition: all 0.2s;
@@ -255,11 +237,12 @@
     .dot.wrong { background: var(--accent3); }
     .dot.answered { background: var(--muted); }
 
+    /* ── QUESTION CARD ── */
     .question-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 32px;
+      padding: 28px 32px;
       margin-bottom: 20px;
       animation: slideIn 0.3s ease;
     }
@@ -285,14 +268,80 @@
     .q-medium { background: rgba(227,179,65,0.1); color: var(--accent4); }
     .q-hard { background: rgba(247,129,102,0.1); color: var(--accent3); }
 
+    /* ── QUESTION TEXT & CODE ── */
     .question-text {
       font-size: 14px;
       line-height: 1.8;
       color: var(--text);
       margin-bottom: 24px;
-      white-space: pre-wrap;
     }
 
+    .question-text .q-code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 14px 0;
+      overflow: hidden;
+    }
+
+    .question-text .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 14px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .question-text .code-lang {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .question-text .lang-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .question-text .copy-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 3px;
+      transition: all 0.15s;
+    }
+    .question-text .copy-btn:hover { background: var(--border); color: var(--text); }
+
+    .question-text .q-code-block code {
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 12px !important;
+      padding: 16px !important;
+      display: block;
+      line-height: 1.7;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .question-text .q-inline-code {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 12px;
+      color: var(--accent3);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── OPTIONS ── */
     .options {
       display: flex;
       flex-direction: column;
@@ -318,8 +367,7 @@
     .option.locked { cursor: default; }
 
     .option-key {
-      width: 22px;
-      height: 22px;
+      width: 22px; height: 22px;
       border-radius: 4px;
       background: var(--border);
       display: flex;
@@ -328,14 +376,32 @@
       font-size: 11px;
       font-weight: 700;
       flex-shrink: 0;
+      margin-top: 1px;
       transition: all 0.15s;
     }
     .option.selected .option-key { background: var(--accent); color: var(--bg); }
     .option.correct .option-key { background: var(--accent2); color: var(--bg); }
     .option.wrong .option-key { background: var(--accent3); color: var(--bg); }
 
-    .option-text { font-size: 13px; color: var(--text); line-height: 1.6; }
+    .option-text {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+      flex: 1;
+    }
 
+    /* option inline code */
+    .option-text code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 11px;
+      color: var(--accent3);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── EXPLANATION ── */
     .explanation-box {
       display: none;
       margin-top: 16px;
@@ -352,14 +418,22 @@
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .explanation-box.show { display: block; }
     .explanation-box strong { color: var(--accent2); }
+    .explanation-box code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 11px;
+      color: var(--accent3);
+    }
 
+    /* ── NAV ── */
     .quiz-nav {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-top: 20px;
     }
-
     .skip-btn {
       background: transparent;
       border: 1px solid var(--border);
@@ -372,7 +446,6 @@
       transition: all 0.2s;
     }
     .skip-btn:hover { border-color: var(--muted); color: var(--text); }
-
     .next-btn {
       background: var(--accent);
       border: none;
@@ -396,10 +469,8 @@
       text-align: center;
       padding: 40px 0 32px;
     }
-
     .score-ring {
-      width: 140px;
-      height: 140px;
+      width: 140px; height: 140px;
       border-radius: 50%;
       border: 6px solid var(--border);
       display: flex;
@@ -407,20 +478,16 @@
       align-items: center;
       justify-content: center;
       margin: 0 auto 24px;
-      position: relative;
       transition: border-color 0.5s;
     }
     .score-ring.pass { border-color: var(--accent2); }
     .score-ring.fail { border-color: var(--accent3); }
-
     .score-num {
       font-family: 'Syne', sans-serif;
       font-size: 36px;
       font-weight: 800;
-      color: var(--text);
     }
     .score-label { font-size: 10px; color: var(--muted); letter-spacing: 2px; }
-
     .result-title {
       font-family: 'Syne', sans-serif;
       font-size: 22px;
@@ -435,7 +502,6 @@
       gap: 12px;
       margin: 32px 0;
     }
-
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -447,7 +513,6 @@
       font-family: 'Syne', sans-serif;
       font-size: 24px;
       font-weight: 800;
-      color: var(--text);
       margin-bottom: 4px;
     }
     .stat-key { font-size: 10px; color: var(--muted); letter-spacing: 1px; }
@@ -467,11 +532,7 @@
       color: var(--accent4);
       margin-bottom: 12px;
     }
-    .weak-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .weak-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .weak-tag {
       background: rgba(227,179,65,0.1);
       border: 1px solid rgba(227,179,65,0.2);
@@ -484,9 +545,7 @@
     }
     .weak-tag:hover { background: rgba(227,179,65,0.2); }
 
-    .review-section {
-      margin-top: 32px;
-    }
+    .review-section { margin-top: 32px; }
     .review-title {
       font-size: 11px;
       letter-spacing: 2px;
@@ -494,7 +553,6 @@
       color: var(--muted);
       margin-bottom: 16px;
     }
-
     .review-item {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -505,14 +563,63 @@
     .review-item.correct-item { border-left: 3px solid var(--accent2); }
     .review-item.wrong-item { border-left: 3px solid var(--accent3); }
 
-    .review-q { font-size: 12px; color: var(--text); margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap; }
-    .review-answer {
-      font-size: 11px;
-      margin-bottom: 8px;
+    .review-q {
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 10px;
+      line-height: 1.7;
     }
+    .review-q .q-code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .review-q .q-code-block .code-header {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--muted);
+      gap: 6px;
+    }
+    .review-q .q-code-block .lang-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .review-q .q-code-block code {
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 11px !important;
+      padding: 12px !important;
+      display: block;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .review-q .q-inline-code {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 11px;
+      color: var(--accent3);
+    }
+
+    .review-answer { font-size: 11px; margin-bottom: 8px; }
     .review-correct { color: var(--accent2); }
     .review-wrong { color: var(--accent3); }
     .review-explanation { font-size: 11px; color: var(--muted); line-height: 1.7; }
+    .review-explanation code {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 10px;
+      color: var(--accent3);
+    }
 
     .results-actions {
       display: flex;
@@ -534,6 +641,7 @@
     <span class="topbar-sep">/</span>
     <span class="topbar-title">quiz mode</span>
     <div class="topbar-right">
+      <a href="/progress" class="nav-btn" style="border-color:rgba(188,140,255,0.4);color:var(--accent5)">📊 progress</a>
       <a href="/challenge" class="nav-btn">⚡ challenge</a>
       <a href="/app" class="nav-btn">← dashboard</a>
     </div>
@@ -665,11 +773,74 @@
     const API = '';
     let questions = [];
     let currentIndex = 0;
-    let answers = {};      // { index: { selected, correct, skipped } }
+    let answers = {};
     let timerInterval = null;
     let elapsed = 0;
     let selectedTopic = null;
-    let quizStartTime = null;
+
+    // ── HELPERS ──
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /**
+     * Converts raw question/option text into HTML.
+     * Handles: fenced code blocks, inline backtick code, newlines.
+     */
+    function formatText(text) {
+      if (!text) return '';
+
+      // fenced code blocks: ```java ... ``` or ``` ... ```
+      text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => {
+        const detectedLang = lang || 'java';
+        const escaped = escapeHtml(code.trim());
+        return `
+          <div class="q-code-block">
+            <div class="code-header">
+              <div class="code-lang">
+                <div class="lang-dot"></div>
+                ${escapeHtml(detectedLang)}
+              </div>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <code class="language-${escapeHtml(detectedLang)}" data-raw="${encodeURIComponent(code.trim())}">${escaped}</code>
+          </div>`;
+      });
+
+      // inline backtick code
+      text = text.replace(/`([^`\n]+)`/g, (_, code) =>
+        `<span class="q-inline-code">${escapeHtml(code)}</span>`
+      );
+
+      // newlines to <br> (but not inside our injected HTML blocks)
+      text = text.replace(/\n/g, '<br>');
+
+      return text;
+    }
+
+    /**
+     * Run hljs on all code blocks inside a container element,
+     * and replace data-raw content so escaping is correct.
+     */
+    function highlightIn(container) {
+      container.querySelectorAll('code[data-raw]').forEach(block => {
+        block.textContent = decodeURIComponent(block.dataset.raw);
+        block.removeAttribute('data-raw');
+        hljs.highlightElement(block);
+      });
+    }
+
+    window.copyCode = (btn) => {
+      const code = btn.closest('.q-code-block').querySelector('code');
+      navigator.clipboard.writeText(code.innerText || code.textContent);
+      btn.textContent = 'copied!';
+      setTimeout(() => btn.textContent = 'copy', 2000);
+    };
 
     // ── TOPIC SELECTION ──
     document.getElementById('topic-grid').addEventListener('click', (e) => {
@@ -699,15 +870,12 @@
         });
 
         const data = await res.json();
-        if (!data.questions || data.questions.length === 0) {
-          throw new Error('No questions returned');
-        }
+        if (!data.questions || data.questions.length === 0) throw new Error('No questions returned');
 
         questions = data.questions;
         currentIndex = 0;
         answers = {};
         elapsed = 0;
-        quizStartTime = Date.now();
 
         document.getElementById('loading-screen').style.display = 'none';
         document.getElementById('quiz-screen').style.display = 'block';
@@ -727,7 +895,7 @@
     function startTimer() {
       const timerEl = document.getElementById('quiz-timer');
       const fill = document.getElementById('timer-fill');
-      const totalTime = questions.length * 90; // 90s per question
+      const totalTime = questions.length * 90;
 
       timerInterval = setInterval(() => {
         elapsed++;
@@ -738,27 +906,25 @@
         const pct = Math.max(0, 100 - (elapsed / totalTime) * 100);
         fill.style.width = pct + '%';
 
-        if (pct < 20) fill.style.background = 'var(--accent3)';
-        else if (pct < 40) fill.style.background = 'var(--accent4)';
-        else fill.style.background = 'var(--accent2)';
+        if (pct < 20) { fill.style.background = 'var(--accent3)'; timerEl.className = 'quiz-timer danger'; }
+        else if (pct < 40) { fill.style.background = 'var(--accent4)'; timerEl.className = 'quiz-timer warning'; }
+        else { fill.style.background = 'var(--accent2)'; timerEl.className = 'quiz-timer'; }
 
         if (elapsed >= totalTime) finishQuiz();
       }, 1000);
     }
 
-    // ── PROGRESS DOTS ──
+    // ── DOTS ──
     function buildProgressDots() {
-      const container = document.getElementById('progress-dots');
-      container.innerHTML = questions.map((_, i) =>
-        `<div class="dot ${i === 0 ? 'current' : ''}" id="dot-${i}"></div>`
-      ).join('');
+      document.getElementById('progress-dots').innerHTML =
+        questions.map((_, i) =>
+          `<div class="dot ${i === 0 ? 'current' : ''}" id="dot-${i}"></div>`
+        ).join('');
     }
 
     function updateDot(index, state) {
       const dot = document.getElementById(`dot-${index}`);
-      if (dot) {
-        dot.className = 'dot ' + state;
-      }
+      if (dot) dot.className = 'dot ' + state;
     }
 
     // ── RENDER QUESTION ──
@@ -767,46 +933,58 @@
       document.getElementById('q-current').textContent = currentIndex + 1;
       document.getElementById('q-total').textContent = questions.length;
 
-      // meta badges
       const diffClass = { easy: 'q-easy', medium: 'q-medium', hard: 'q-hard' }[q.difficulty] || 'q-medium';
       document.getElementById('question-meta').innerHTML = `
-        <span class="q-badge q-topic">${q.topic || 'general'}</span>
-        <span class="q-badge ${diffClass}">${q.difficulty || 'medium'}</span>
+        <span class="q-badge q-topic">${escapeHtml(q.topic || 'general')}</span>
+        <span class="q-badge ${diffClass}">${escapeHtml(q.difficulty || 'medium')}</span>
       `;
 
-      document.getElementById('question-text').textContent = q.question;
+      // Render question text with code support
+      const questionTextEl = document.getElementById('question-text');
+      questionTextEl.innerHTML = formatText(q.question);
+      highlightIn(questionTextEl);
 
-      // options
+      // Render options — also format inline code in option text
       const optionsEl = document.getElementById('options');
       optionsEl.innerHTML = Object.entries(q.options).map(([key, val]) => `
         <div class="option" data-key="${key}" onclick="selectOption('${key}')">
-          <div class="option-key">${key}</div>
-          <div class="option-text">${val}</div>
+          <div class="option-key">${escapeHtml(key)}</div>
+          <div class="option-text">${formatOptionText(val)}</div>
         </div>
       `).join('');
 
-      // hide explanation and next btn
       document.getElementById('explanation-box').classList.remove('show');
       document.getElementById('next-btn').classList.remove('show');
 
-      // restore previous answer if revisiting
       if (answers[currentIndex]) {
         lockOptions(answers[currentIndex]);
+        showExplanation(q, answers[currentIndex].selected === answers[currentIndex].correct);
       }
+    }
+
+    /**
+     * Options are usually short; only handle inline backtick code,
+     * not full fenced blocks (they won't appear in a single option).
+     */
+    function formatOptionText(text) {
+      if (!text) return '';
+      return text
+        .replace(/`([^`\n]+)`/g, (_, code) =>
+          `<code>${escapeHtml(code)}</code>`
+        )
+        .replace(/\n/g, '<br>');
     }
 
     // ── SELECT OPTION ──
     window.selectOption = (key) => {
-      if (answers[currentIndex]) return; // already answered
+      if (answers[currentIndex]) return;
 
       const q = questions[currentIndex];
       const isCorrect = key === q.correct;
-
       answers[currentIndex] = { selected: key, correct: q.correct, skipped: false };
 
       lockOptions({ selected: key, correct: q.correct });
       showExplanation(q, isCorrect);
-
       updateDot(currentIndex, isCorrect ? 'correct' : 'wrong');
       document.getElementById('next-btn').classList.add('show');
     };
@@ -822,7 +1000,10 @@
 
     function showExplanation(q, isCorrect) {
       const box = document.getElementById('explanation-box');
-      box.innerHTML = `<strong>${isCorrect ? '✓ Correct!' : '✗ Incorrect.'}</strong> ${q.explanation}`;
+      const label = isCorrect ? '✓ Correct!' : '✗ Incorrect.';
+      // Format explanation text for inline code
+      const formattedExplanation = formatOptionText(q.explanation || '');
+      box.innerHTML = `<strong>${label}</strong> ${formattedExplanation}`;
       box.classList.add('show');
     }
 
@@ -838,9 +1019,11 @@
     // ── NEXT ──
     window.nextQuestion = () => {
       if (currentIndex < questions.length - 1) {
-        updateDot(currentIndex, answers[currentIndex]
-          ? (answers[currentIndex].skipped ? 'answered' : answers[currentIndex].selected === answers[currentIndex].correct ? 'correct' : 'wrong')
-          : 'answered'
+        const a = answers[currentIndex];
+        updateDot(currentIndex,
+          !a ? 'answered'
+          : a.skipped ? 'answered'
+          : a.selected === a.correct ? 'correct' : 'wrong'
         );
         currentIndex++;
         updateDot(currentIndex, 'current');
@@ -857,12 +1040,11 @@
       const token = await getToken();
       const total = questions.length;
       const correct = Object.values(answers).filter(a => !a.skipped && a.selected === a.correct).length;
-      const wrong = Object.values(answers).filter(a => !a.skipped && a.selected !== a.correct).length;
+      const wrong   = Object.values(answers).filter(a => !a.skipped && a.selected !== a.correct).length;
       const skipped = Object.values(answers).filter(a => a.skipped).length;
-      const pct = Math.round((correct / total) * 100);
-      const passed = pct >= 65;
+      const pct     = Math.round((correct / total) * 100);
+      const passed  = pct >= 65;
 
-      // collect weak topics
       const weakTopics = [...new Set(
         Object.entries(answers)
           .filter(([i, a]) => !a.skipped && a.selected !== a.correct)
@@ -870,27 +1052,33 @@
           .filter(Boolean)
       )];
 
-      // save to supabase
+      // save to quiz_results
       try {
         await fetch(`${API}/quiz/save`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ topic: selectedTopic, score: correct, total, wrong_topics: weakTopics, time_taken: elapsed })
+        });
+      } catch (e) { console.error('quiz/save failed:', e); }
+
+      // save to user_progress for analytics
+      try {
+        await fetch(`${API}/progress/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
-            topic: selectedTopic,
+            session_type: 'quiz',
+            topic: selectedTopic || null,
             score: correct,
             total,
-            wrong_topics: weakTopics,
-            time_taken: elapsed
+            passed,
+            time_spent_secs: elapsed,
+            weak_topics: weakTopics
           })
         });
-      } catch (e) {
-        console.error('Failed to save quiz result:', e);
-      }
+      } catch (e) { console.error('progress/save failed:', e); }
 
-      // render results
+      // show results
       document.getElementById('quiz-screen').style.display = 'none';
       document.getElementById('results-screen').style.display = 'block';
 
@@ -907,46 +1095,42 @@
       document.getElementById('stat-skipped').textContent = skipped;
       const mins = Math.floor(elapsed / 60);
       const secs = elapsed % 60;
-      document.getElementById('stat-time').textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+      document.getElementById('stat-time').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
 
-      // weak topics
       if (weakTopics.length > 0) {
         document.getElementById('weak-topics-section').style.display = 'block';
         document.getElementById('weak-list').innerHTML = weakTopics.map(t =>
-          `<span class="weak-tag" onclick="studyTopic('${t}')">${t}</span>`
+          `<span class="weak-tag" onclick="studyTopic('${escapeHtml(t)}')">${escapeHtml(t)}</span>`
         ).join('');
       }
 
-      // review
-      document.getElementById('review-list').innerHTML = questions.map((q, i) => {
+      // review — with code support in question text
+      const reviewList = document.getElementById('review-list');
+      reviewList.innerHTML = questions.map((q, i) => {
         const a = answers[i];
         if (!a) return '';
         const isCorrect = !a.skipped && a.selected === a.correct;
         return `
           <div class="review-item ${isCorrect ? 'correct-item' : 'wrong-item'}">
-            <div class="review-q">${i+1}. ${q.question}</div>
+            <div class="review-q" id="review-q-${i}">${i+1}. ${formatText(q.question)}</div>
             ${a.skipped
-              ? `<div class="review-answer" style="color:var(--muted)">Skipped — correct: ${q.correct}) ${q.options[q.correct]}</div>`
+              ? `<div class="review-answer" style="color:var(--muted)">Skipped — correct: ${escapeHtml(q.correct)}) ${formatOptionText(q.options[q.correct])}</div>`
               : `<div class="review-answer ${isCorrect ? 'review-correct' : 'review-wrong'}">
-                  Your answer: ${a.selected}) ${q.options[a.selected] || '—'}
-                  ${!isCorrect ? ` · Correct: ${q.correct}) ${q.options[q.correct]}` : ''}
+                  Your answer: ${escapeHtml(a.selected)}) ${formatOptionText(q.options[a.selected] || '—')}
+                  ${!isCorrect ? ` · Correct: ${escapeHtml(q.correct)}) ${formatOptionText(q.options[q.correct])}` : ''}
                 </div>`
             }
-            <div class="review-explanation">${q.explanation}</div>
+            <div class="review-explanation">${formatOptionText(q.explanation || '')}</div>
           </div>
         `;
       }).join('');
+
+      // highlight code blocks in review
+      highlightIn(reviewList);
     }
 
-    window.studyTopic = (topic) => {
-      window.location.href = `/app?topic=${topic}`;
-    };
-
-    window.retryQuiz = () => {
-      document.getElementById('results-screen').style.display = 'none';
-      startQuiz();
-    };
-
+    window.studyTopic = (topic) => { window.location.href = `/app?topic=${topic}`; };
+    window.retryQuiz = () => { document.getElementById('results-screen').style.display = 'none'; startQuiz(); };
     window.goToSetup = () => {
       document.getElementById('results-screen').style.display = 'none';
       document.getElementById('setup-screen').style.display = 'flex';

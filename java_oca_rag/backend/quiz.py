@@ -23,58 +23,59 @@ def generate_quiz(topic: str | None, num_questions: int = 20) -> list[dict]:
     chunks = search_qdrant(search_query, filters)
     context = "\n\n---\n\n".join(chunks) if chunks else "Java OCA SE 8 certification topics"
 
-    prompt = f"""You are a Java OCA SE 8 exam question generator.
+    all_questions = []
+    batch_size = 5  # smaller batches = less chance of truncation
+    batches = (num_questions + batch_size - 1) // batch_size
 
-Using the context below, generate exactly {num_questions} multiple choice questions.
-{"Topic focus: " + topic if topic else "Cover a broad range of OCA SE 8 topics."}
+    for batch_num in range(batches):
+        start_id = batch_num * batch_size + 1
+        end_id = min(start_id + batch_size - 1, num_questions)
+        count = end_id - start_id + 1
 
-STRICT OUTPUT FORMAT — return a JSON array only, no explanation, no backticks:
+        prompt = f"""Generate exactly {count} Java OCA SE 8 multiple choice questions.
+{"Topic: " + topic if topic else "Cover broad OCA SE 8 topics."}
+Number them {start_id} to {end_id}.
+
+Return ONLY a JSON array, no explanation, no backticks:
 [
   {{
-    "id": 1,
-    "topic": "inheritance",
-    "difficulty": "medium",
-    "question": "What is the output of the following code?",
-    "options": {{
-      "A": "A",
-      "B": "B",
-      "C": "Compile error",
-      "D": "Runtime error"
-    }},
-    "correct": "B",
-    "explanation": "Because of runtime polymorphism..."
+    "id": {start_id},
+    "topic": "topic name",
+    "difficulty": "easy|medium|hard",
+    "question": "question text — include Java code using ```java\\n...\\n``` when relevant",
+    "options": {{"A": "...", "B": "...", "C": "...", "D": "..."}},
+    "correct": "A",
+    "explanation": "why the correct answer is right"
   }}
 ]
 
 Rules:
-- Each question must have exactly 4 options: A, B, C, D
-- correct must be one of: A, B, C, D
-- Mix difficulties: 30% easy, 50% medium, 20% hard
-- Include code snippet questions where relevant
-- explanation must clearly explain WHY the correct answer is right
-- CRITICAL: every string value must be complete — never truncate mid-sentence
-- Return ONLY the JSON array, nothing else
-
-Context:
-{context}
+- Exactly 4 options: A, B, C, D
+- correct is one of: A, B, C, D
+- At least {max(1, count // 2)} questions must include a Java code snippet in the question field
+- Code snippets must use fenced blocks: ```java\\n<code here>\\n```
+- Code must be properly indented, one statement per line
+- All strings must be complete, never truncated
+- ONLY the JSON array, nothing else
 """
 
-    result = llm_call(
-        system="You are a Java OCA SE 8 exam generator. Return a valid JSON array only. No backticks. No explanation.",
-        user=prompt,
-        max_tokens=4000
-    )
+        result = llm_call(
+            system="You are a Java OCA SE 8 exam generator. Return a valid JSON array only. No backticks. No explanation.",
+            user=prompt,
+            max_tokens=2000  # 2000 tokens per 5 questions = plenty of room
+        )
 
-    try:
-        cleaned = _strip_fences(result)
-        questions = json.loads(cleaned)
-        if isinstance(questions, list):
-            return questions
-    except json.JSONDecodeError as e:
-        print(f"Quiz JSON parse error: {e}")
-        print(f"Raw output: {result[:500]}")
+        try:
+            cleaned = _strip_fences(result)
+            batch = json.loads(cleaned)
+            if isinstance(batch, list):
+                all_questions.extend(batch)
+        except json.JSONDecodeError as e:
+            print(f"Batch {batch_num + 1} parse error: {e}")
+            print(f"Raw output: {result[:300]}")
+            continue  # skip bad batch, don't fail entirely
 
-    return []
+    return all_questions
 
 
 def generate_challenge(topic: str) -> dict:
